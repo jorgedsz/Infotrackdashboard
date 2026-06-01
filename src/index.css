@@ -127,6 +127,25 @@ body { margin: 0; }
   border-radius: 8px;
   font-size: 14px;
 }
+.daterange {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+.daterange__label { font-size: 12px; color: #64748b; font-weight: 600; }
+.daterange__input {
+  border: none;
+  font-size: 12px;
+  color: #334155;
+  background: transparent;
+  outline: none;
+}
+.daterange__sep { color: #94a3b8; }
+
 .filterbar__reset {
   background: #fee2e2;
   color: #b91c1c;

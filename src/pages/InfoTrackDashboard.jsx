@@ -35,6 +35,9 @@ export default function InfoTrackDashboard() {
   const [filters, setFilters] = useState(emptyFilters)
   const [search, setSearch] = useState('')
   const [tab, setTab] = useState('tabla')
+  // Rangos de fecha editables (ISO YYYY-MM-DD; '' = sin límite)
+  const emptyDates = { fechaCreacion: { from: '', to: '' }, fechaCierre: { from: '', to: '' } }
+  const [dateFilters, setDateFilters] = useState(emptyDates)
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -42,13 +45,19 @@ export default function InfoTrackDashboard() {
       for (const [key, set] of Object.entries(filters)) {
         if (set.size && !set.has(row[key] ?? '')) return false
       }
+      // Rangos de fecha (comparación de strings ISO funciona lexicográficamente)
+      for (const [key, { from, to }] of Object.entries(dateFilters)) {
+        const v = row[key]
+        if (from && (!v || v < from)) return false
+        if (to && (!v || v > to)) return false
+      }
       if (q) {
         const hay = `${row.empresa} ${row.proyecto} ${row.oportunidad}`.toLowerCase()
         if (!hay.includes(q)) return false
       }
       return true
     })
-  }, [allRows, filters, search])
+  }, [allRows, filters, search, dateFilters])
 
   return (
     <div className="dashboard">
@@ -73,7 +82,9 @@ export default function InfoTrackDashboard() {
         setFilters={setFilters}
         search={search}
         setSearch={setSearch}
-        onReset={() => { setFilters(emptyFilters()); setSearch('') }}
+        dateFilters={dateFilters}
+        setDateFilters={setDateFilters}
+        onReset={() => { setFilters(emptyFilters()); setSearch(''); setDateFilters(emptyDates) }}
       />
 
       <nav className="tabs">

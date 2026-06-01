@@ -1,12 +1,22 @@
 import { FILTER_COLUMNS } from '../lib/columns'
 import MultiSelect from './MultiSelect'
 
-// filters: { [colKey]: Set<value> }  (Set vacío = sin filtrar por esa columna)
-export default function FilterBar({ rows, filters, setFilters, search, setSearch, onReset }) {
-  const setCol = (key, set) => setFilters((f) => ({ ...f, [key]: set }))
+// Rangos de fecha editables que se muestran como controles Desde/Hasta
+const DATE_RANGES = [
+  { key: 'fechaCreacion', label: 'Creación' },
+  { key: 'fechaCierre', label: 'Cierre' },
+]
 
+// filters: { [colKey]: Set<value> }  (Set vacío = sin filtrar por esa columna)
+// dateFilters: { [colKey]: { from, to } }
+export default function FilterBar({ rows, filters, setFilters, search, setSearch, dateFilters, setDateFilters, onReset }) {
+  const setCol = (key, set) => setFilters((f) => ({ ...f, [key]: set }))
+  const setDate = (key, side, value) =>
+    setDateFilters((d) => ({ ...d, [key]: { ...d[key], [side]: value } }))
+
+  const activeDates = Object.values(dateFilters || {}).reduce((a, r) => a + (r.from ? 1 : 0) + (r.to ? 1 : 0), 0)
   const activeCount =
-    Object.values(filters).reduce((a, s) => a + (s?.size || 0), 0) + (search ? 1 : 0)
+    Object.values(filters).reduce((a, s) => a + (s?.size || 0), 0) + (search ? 1 : 0) + activeDates
 
   return (
     <div className="filterbar">
@@ -30,6 +40,28 @@ export default function FilterBar({ rows, filters, setFilters, search, setSearch
           />
         )
       })}
+
+      {DATE_RANGES.map(({ key, label }) => (
+        <div className="daterange" key={key}>
+          <span className="daterange__label">{label}:</span>
+          <input
+            type="date"
+            className="daterange__input"
+            value={dateFilters?.[key]?.from || ''}
+            onChange={(e) => setDate(key, 'from', e.target.value)}
+            title={`${label} desde`}
+          />
+          <span className="daterange__sep">–</span>
+          <input
+            type="date"
+            className="daterange__input"
+            value={dateFilters?.[key]?.to || ''}
+            onChange={(e) => setDate(key, 'to', e.target.value)}
+            title={`${label} hasta`}
+          />
+        </div>
+      ))}
+
       {activeCount > 0 && (
         <button className="filterbar__reset" onClick={onReset}>
           Limpiar ({activeCount})
