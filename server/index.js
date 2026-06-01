@@ -14,7 +14,7 @@ app.use(cors())
 const PORT = process.env.PORT || 3001
 const LOCATION = process.env.GHL_LOCATION_ID
 const PIPELINE = process.env.GHL_PIPELINE_ID || null
-const REFRESH_MS = Number(process.env.REFRESH_MS || 5 * 60 * 1000) // 5 min
+const REFRESH_MS = Number(process.env.REFRESH_MS || 30 * 1000) // 30 s
 
 const configured = () => Boolean(process.env.GHL_TOKEN && LOCATION)
 

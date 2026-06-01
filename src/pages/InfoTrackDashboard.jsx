@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { enrichAll } from '../lib/calc'
 import { FILTER_COLUMNS } from '../lib/columns'
 import { loadPipeline } from '../services/pipelineApi'
@@ -20,14 +20,23 @@ export default function InfoTrackDashboard() {
   const [rawRows, setRawRows] = useState([])
   const [meta, setMeta] = useState({ source: null, updatedAt: null, error: null })
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    loadPipeline().then(({ rows, source, updatedAt, error }) => {
-      setRawRows(rows)
-      setMeta({ source, updatedAt, error })
-      setLoading(false)
-    })
+  const fetchData = useCallback(async () => {
+    setRefreshing(true)
+    const { rows, source, updatedAt, error } = await loadPipeline()
+    setRawRows(rows)
+    setMeta({ source, updatedAt, error })
+    setLoading(false)
+    setRefreshing(false)
   }, [])
+
+  // Carga inicial + auto-refresco cada 30 s (sin recargar la página)
+  useEffect(() => {
+    fetchData()
+    const id = setInterval(fetchData, 30 * 1000)
+    return () => clearInterval(id)
+  }, [fetchData])
 
   // Enriquecemos: aplica todas las fórmulas a las oportunidades
   const allRows = useMemo(() => enrichAll(rawRows), [rawRows])
@@ -66,12 +75,18 @@ export default function InfoTrackDashboard() {
           <h1>InfoTrack Dashboard</h1>
           <p className="dashboard__subtitle">
             Pipeline Total · {SOURCE_LABEL[meta.source] || 'cargando…'}
-            {meta.updatedAt && ` · actualizado ${new Date(meta.updatedAt).toLocaleString('es-CO')}`}
+            {meta.updatedAt && ` · actualizado ${new Date(meta.updatedAt).toLocaleTimeString('es-CO')}`}
+            <span className="dashboard__live"> · auto cada 30s</span>
           </p>
         </div>
-        <span className="dashboard__badge">
-          {loading ? 'cargando…' : `${filtered.length} / ${allRows.length} oportunidades`}
-        </span>
+        <div className="dashboard__actions">
+          <span className="dashboard__badge">
+            {loading ? 'cargando…' : `${filtered.length} / ${allRows.length} oportunidades`}
+          </span>
+          <button className="dashboard__refresh" onClick={fetchData} disabled={refreshing} title="Actualizar ahora">
+            {refreshing ? '↻ …' : '↻ Actualizar'}
+          </button>
+        </div>
       </header>
 
       <KpiBar rows={filtered} />

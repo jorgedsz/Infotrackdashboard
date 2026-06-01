@@ -29,6 +29,19 @@ body { margin: 0; }
   padding: 6px 12px;
   border-radius: 999px;
 }
+.dashboard__actions { display: flex; align-items: center; gap: 10px; }
+.dashboard__refresh {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dashboard__refresh:disabled { opacity: .6; cursor: default; }
+.dashboard__live { color: #22c55e; font-weight: 600; }
 
 /* ---------- KPIs ---------- */
 .kpis {

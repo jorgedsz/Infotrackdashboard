@@ -20,7 +20,7 @@ GHL_TOKEN=pit-xxxxxxxx          # Private Integration token
 GHL_LOCATION_ID=xxxxxxxx        # ID de la sub-cuenta
 GHL_PIPELINE_ID=xxxxxxxx        # (opcional) pipeline a mostrar
 PORT=3001
-REFRESH_MS=300000               # refresco automático cada 5 min
+REFRESH_MS=30000                # refresco automático cada 30 s
 ```
 
 ## Producción (un solo servicio)
