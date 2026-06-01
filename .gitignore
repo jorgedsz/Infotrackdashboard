@@ -1,0 +1,11 @@
+node_modules
+dist
+.DS_Store
+*.local
+.env
+
+# Fuente cruda y datos sensibles
+*.xlsx
+*.csv
+# Seed con data real del CRM — no se versiona (la data viene en vivo de GHL)
+src/data/pipeline.json

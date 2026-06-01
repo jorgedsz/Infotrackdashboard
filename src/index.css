@@ -1,0 +1,251 @@
+:root {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: #1e293b;
+  background: #f1f5f9;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+
+.dashboard {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+.dashboard__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.dashboard__header h1 { margin: 0; font-size: 24px; }
+.dashboard__subtitle { margin: 4px 0 0; color: #64748b; font-size: 14px; }
+.dashboard__badge {
+  background: #e0e7ff;
+  color: #4338ca;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+/* ---------- KPIs ---------- */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.kpi {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid var(--accent, #6366f1);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.kpi__label { color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+.kpi__value { font-size: 22px; font-weight: 700; color: #0f172a; }
+/* COP completo es largo: reducimos para que no se desborde */
+.kpi__value--money { font-size: 17px; letter-spacing: -0.02em; }
+.kpi__value--date { font-size: 14px; font-weight: 600; color: #334155; }
+
+/* ---------- Pestañas ---------- */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.tab {
+  background: none;
+  border: none;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.tab:hover { color: #334155; }
+.tab--active { color: #4338ca; border-bottom-color: #6366f1; }
+
+/* ---------- Gráficos ---------- */
+.metricbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.metricbar__label { font-size: 13px; color: #64748b; font-weight: 600; margin-right: 4px; }
+.metricbar__group { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-left: 2px solid #e2e8f0; }
+.metricbar__grouplabel { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .04em; }
+.metricbar__btn {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #475569;
+  cursor: pointer;
+}
+.metricbar__btn--active { background: #6366f1; border-color: #6366f1; color: #fff; font-weight: 600; }
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.chart--wide { grid-column: 1 / -1; }
+.chart {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px 6px;
+}
+.chart__title { margin: 0 0 10px; font-size: 14px; color: #334155; font-weight: 600; }
+
+/* ---------- Filtros ---------- */
+.filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+.filterbar__search {
+  flex: 1 1 240px;
+  min-width: 200px;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.filterbar__reset {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ms { position: relative; }
+.ms__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #334155;
+}
+.ms__btn--active { border-color: #6366f1; background: #eef2ff; color: #4338ca; }
+.ms__count {
+  background: #6366f1;
+  color: #fff;
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.ms__caret { color: #94a3b8; font-size: 10px; }
+.ms__menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 220px;
+  max-width: 340px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
+  padding: 8px;
+}
+.ms__actions { display: flex; gap: 6px; margin-bottom: 6px; }
+.ms__actions button {
+  flex: 1;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 6px;
+  padding: 5px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #475569;
+}
+.ms__list { max-height: 260px; overflow-y: auto; }
+.ms__opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  font-size: 13px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.ms__opt:hover { background: #f8fafc; }
+.ms__opt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- Tabla ---------- */
+.tabletoggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+.tablewrap {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: auto;
+  max-height: 70vh;
+}
+/* Columnas mensuales: más compactas y con tinte para distinguirlas */
+.ptable th.month, .ptable td.month { background: #fafaf5; font-size: 12px; padding-left: 8px; padding-right: 8px; }
+.ptable th.month { color: #92400e; }
+.ptable {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.ptable thead th {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  color: #475569;
+  text-align: left;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-bottom: 2px solid #e2e8f0;
+  cursor: pointer;
+  user-select: none;
+  z-index: 1;
+}
+.ptable thead th.calc { background: #f5f3ff; color: #6d28d9; }
+.ptable thead th.num, .ptable td.num { text-align: right; }
+.ptable tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ptable tbody tr:hover { background: #f8fafc; }
+.ptable__arrow { color: #6366f1; }
+.ptable__empty { text-align: center; color: #94a3b8; padding: 30px; }
