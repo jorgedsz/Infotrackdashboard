@@ -231,15 +231,56 @@ body { margin: 0; }
 .ms__opt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------- Tabla ---------- */
+.tablebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
 .tabletoggle {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 13px;
   color: #475569;
-  margin-bottom: 10px;
   cursor: pointer;
 }
+.pagesize { display: inline-flex; align-items: center; gap: 6px; }
+.pagesize__label { font-size: 13px; color: #64748b; font-weight: 600; }
+.pagesize__btn {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 13px;
+  color: #475569;
+  cursor: pointer;
+}
+.pagesize__btn--active { background: #6366f1; border-color: #6366f1; color: #fff; font-weight: 600; }
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+.pager__info { font-size: 13px; color: #64748b; }
+.pager__nav { display: inline-flex; align-items: center; gap: 6px; }
+.pager__nav button {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+}
+.pager__nav button:disabled { opacity: .45; cursor: default; }
+.pager__page { font-size: 13px; color: #475569; font-weight: 600; padding: 0 6px; }
 .tablewrap {
   background: #fff;
   border: 1px solid #e2e8f0;
