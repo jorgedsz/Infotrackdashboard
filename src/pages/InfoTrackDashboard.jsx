@@ -8,6 +8,7 @@ import Charts from '../components/Charts'
 import PipelineTable from '../components/PipelineTable'
 import CustomMetrics from '../components/CustomMetrics'
 import UsersAdmin from '../components/UsersAdmin'
+import ViewsBar from '../components/ViewsBar'
 import { useAuth } from '../context/AuthContext'
 
 const emptyFilters = () => Object.fromEntries(FILTER_COLUMNS.map((c) => [c.key, new Set()]))
@@ -72,6 +73,22 @@ export default function InfoTrackDashboard() {
     })
   }, [allRows, filters, search, dateFilters])
 
+  // --- Vistas (presets de filtros): capturar y reaplicar el estado ---
+  const getViewState = () => ({
+    filters: Object.fromEntries(Object.entries(filters).map(([k, s]) => [k, [...s]])),
+    search,
+    dateFilters,
+    tab,
+  })
+  const applyViewState = (st = {}) => {
+    const f = emptyFilters()
+    for (const [k, vals] of Object.entries(st.filters || {})) if (f[k]) f[k] = new Set(vals)
+    setFilters(f)
+    setSearch(st.search || '')
+    setDateFilters(st.dateFilters || emptyDates)
+    if (st.tab) setTab(st.tab)
+  }
+
   return (
     <div className="dashboard">
       <header className="dashboard__header">
@@ -98,6 +115,8 @@ export default function InfoTrackDashboard() {
       </header>
 
       <KpiBar rows={filtered} />
+
+      <ViewsBar getState={getViewState} applyState={applyViewState} />
 
       <FilterBar
         rows={allRows}

@@ -9,6 +9,7 @@ import { mapAll, FIELD_MAP } from './mapping.js'
 import { initDb, AUTH_ENABLED } from './db.js'
 import { mountAuthRoutes, requireAuth, requireAdmin } from './auth.js'
 import { mountMetricsRoutes } from './metrics.js'
+import { mountViewsRoutes } from './views.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -53,9 +54,10 @@ async function refresh() {
   return cache
 }
 
-// --- Auth + métricas compartidas ---
+// --- Auth + métricas compartidas + vistas personales ---
 mountAuthRoutes(app)
 mountMetricsRoutes(app)
+mountViewsRoutes(app)
 
 // --- Endpoints ---
 app.get('/api/health', (_req, res) =>

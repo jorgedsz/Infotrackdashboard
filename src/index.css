@@ -627,3 +627,23 @@ body {
   background: var(--surface-2); border: 1px solid var(--border-d); color: var(--text-d);
   border-radius: 8px; padding: 4px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
 }
+
+/* ---------- Barra de Vistas (presets de filtros) ---------- */
+.viewsbar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 14px; padding: 10px 12px;
+  background: var(--surface); border: 1px solid var(--border-d);
+  border-radius: 10px; backdrop-filter: blur(8px);
+}
+.viewsbar__label { font-size: 13px; font-weight: 700; color: var(--text-muted); }
+.viewsbar__select {
+  padding: 8px 12px; border-radius: 8px; min-width: 220px; font-size: 14px;
+  background: var(--surface-2); border: 1px solid var(--border-d); color: var(--text-d);
+  font-family: var(--font-body);
+}
+.viewsbar__btn {
+  border: 1px solid var(--border-d); background: var(--surface-2); color: var(--text-d);
+  border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.viewsbar__btn--primary { background: var(--brand-blue); border-color: var(--brand-blue); color: #fff; }
+.viewsbar__btn--danger { background: rgba(220,38,38,.18); border-color: rgba(220,38,38,.4); color: #ff9a9a; }

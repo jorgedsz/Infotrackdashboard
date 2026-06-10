@@ -23,11 +23,24 @@ export async function query(text, params) {
 }
 
 // Inicializa el esquema y crea el admin inicial desde variables de entorno.
-export async function initDb() {
+// Reintenta ante fallos transitorios de red/DNS al arrancar.
+export async function initDb(retries = 5) {
   if (!AUTH_ENABLED) {
     console.log('[infotrack] AUTH desactivado (no hay DATABASE_URL) — dashboard abierto en dev')
     return
   }
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await initDbOnce()
+    } catch (e) {
+      if (attempt >= retries) throw e
+      console.warn(`[infotrack] init DB intento ${attempt} falló (${e.message}); reintentando…`)
+      await new Promise((r) => setTimeout(r, 1500 * attempt))
+    }
+  }
+}
+
+async function initDbOnce() {
   await query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -51,6 +64,16 @@ export async function initDb() {
       id TEXT PRIMARY KEY,
       def JSONB NOT NULL,
       owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `)
+  // Vistas (presets de filtros) PERSONALES por usuario
+  await query(`
+    CREATE TABLE IF NOT EXISTS views (
+      id TEXT PRIMARY KEY,
+      owner_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      state JSONB NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )
   `)
