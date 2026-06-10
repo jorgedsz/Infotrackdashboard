@@ -1,7 +1,7 @@
 import { fmtMoney, fmtNum, fmtDate } from '../lib/format'
 
-// Paleta de marca para los acentos de los KPIs
-const C = { navy: '#002149', blue: '#0068ff', cyan: '#00c6ff', gray: '#6b7480', grayDark: '#4b5160' }
+// Acentos brillantes para que se vean sobre el fondo oscuro
+const C = { navy: '#79b4ff', blue: '#0068ff', cyan: '#00c6ff', gray: '#8aa0b6', grayDark: '#6b8299' }
 
 // Totales calculados sobre las filas ya filtradas
 export default function KpiBar({ rows }) {

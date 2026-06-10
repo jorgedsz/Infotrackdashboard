@@ -6,6 +6,7 @@ import FilterBar from '../components/FilterBar'
 import KpiBar from '../components/KpiBar'
 import Charts from '../components/Charts'
 import PipelineTable from '../components/PipelineTable'
+import CustomMetrics from '../components/CustomMetrics'
 
 const emptyFilters = () => Object.fromEntries(FILTER_COLUMNS.map((c) => [c.key, new Set()]))
 
@@ -107,9 +108,14 @@ export default function InfoTrackDashboard() {
         <button className={'tab' + (tab === 'graficos' ? ' tab--active' : '')} onClick={() => setTab('graficos')}>
           Gráficos
         </button>
+        <button className={'tab' + (tab === 'metricas' ? ' tab--active' : '')} onClick={() => setTab('metricas')}>
+          Mis Métricas
+        </button>
       </nav>
 
-      {tab === 'tabla' ? <PipelineTable rows={filtered} /> : <Charts rows={filtered} />}
+      {tab === 'tabla' && <PipelineTable rows={filtered} />}
+      {tab === 'graficos' && <Charts rows={filtered} />}
+      {tab === 'metricas' && <CustomMetrics rows={allRows} />}
     </div>
   )
 }

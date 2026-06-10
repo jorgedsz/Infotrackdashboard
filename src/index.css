@@ -76,7 +76,7 @@ h1, h2, h3 { font-family: var(--font-head); }
   text-align: center;        /* títulos y valores centrados */
 }
 .kpi__label {
-  color: var(--brand-gray-dark);
+  color: var(--brand-navy);
   font-size: 12px;
   font-weight: 900;          /* títulos en negrita fuerte (Lato Black) */
   text-transform: uppercase;
@@ -371,3 +371,222 @@ h1, h2, h3 { font-family: var(--font-head); }
 .ptable tbody tr:hover { background: #f8fafc; }
 .ptable__arrow { color: var(--brand-blue); }
 .ptable__empty { text-align: center; color: #94a3b8; padding: 30px; }
+
+/* ---------- Métricas personalizadas ---------- */
+.custommetrics__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.custommetrics__hint { margin: 0; color: var(--brand-gray); font-size: 14px; }
+.custommetrics__empty {
+  background: #fff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 28px;
+  text-align: center;
+  color: var(--brand-gray);
+}
+
+.cmbtn {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--brand-gray-dark);
+  cursor: pointer;
+}
+.cmbtn--primary { background: var(--brand-blue); border-color: var(--brand-blue); color: #fff; }
+.cmbtn:disabled { opacity: .5; cursor: default; }
+
+/* Constructor */
+.cmbuilder {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 1px 3px rgba(0, 33, 73, .05);
+}
+.cmbuilder__row { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
+.cmfield { display: flex; flex-direction: column; gap: 4px; flex: 1 1 180px; }
+.cmfield span { font-size: 12px; font-weight: 700; color: var(--brand-gray); text-transform: uppercase; letter-spacing: .03em; }
+.cmfield input, .cmfield select {
+  padding: 9px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: var(--font-body);
+}
+.cmbuilder__label { display: block; font-size: 12px; color: var(--brand-gray); margin-bottom: 8px; }
+.cmcond { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.cmcond > select {
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  min-width: 150px;
+}
+.cmcond__rm {
+  border: none; background: #fee2e2; color: #b91c1c;
+  border-radius: 8px; padding: 6px 10px; cursor: pointer; font-weight: 700;
+}
+.cmbuilder__add {
+  border: 1px dashed #cbd5e1; background: #f8fafc; color: var(--brand-blue);
+  border-radius: 8px; padding: 7px 12px; cursor: pointer; font-size: 13px; font-weight: 700;
+}
+.cmbuilder__footer { display: flex; gap: 10px; margin-top: 16px; }
+
+/* Tarjetas */
+.cmgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.cmcard {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-top: 3px solid var(--brand-blue);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cmcard__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cmcard__name { font-family: var(--font-head); font-weight: 700; color: var(--brand-navy); font-size: 16px; }
+.cmcard__actions { display: flex; gap: 4px; }
+.cmcard__actions button { border: none; background: #f1f5f9; border-radius: 6px; padding: 4px 8px; cursor: pointer; }
+.cmcard__metric { font-size: 12px; color: var(--brand-gray); text-transform: uppercase; letter-spacing: .03em; font-weight: 700; }
+.cmcard__value { font-family: var(--font-head); font-size: 22px; font-weight: 700; color: var(--brand-navy); }
+.cmcard__count { font-size: 12px; color: var(--brand-gray); }
+.cmcard__goal { margin-top: 6px; }
+.cmbar { height: 8px; background: #e6f0ff; border-radius: 999px; overflow: hidden; }
+.cmbar__fill { height: 100%; background: var(--brand-blue); border-radius: 999px; transition: width .3s; }
+.cmcard__goaltext { font-size: 12px; color: var(--brand-gray-dark); font-weight: 700; }
+.cmcard__conds { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.cmchip { font-size: 11px; background: #f1f5f9; color: var(--brand-gray-dark); border-radius: 999px; padding: 2px 8px; }
+.cmdate__label { font-size: 13px; font-weight: 700; color: var(--brand-gray-dark); min-width: 70px; }
+.cmdate__input {
+  padding: 7px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--brand-gray-dark);
+  font-family: var(--font-body);
+}
+
+/* ============================================================
+   TEMA OSCURO (paleta InfoTrack + imagen de fondo del sitio)
+   ============================================================ */
+:root {
+  --surface: rgba(8, 27, 51, 0.72);     /* tarjeta translúcida navy */
+  --surface-2: rgba(255, 255, 255, 0.06);
+  --border-d: rgba(255, 255, 255, 0.12);
+  --text-d: #e8eef6;
+  --text-muted: #9fb3c8;
+  --text-strong: #ffffff;
+  color-scheme: dark;
+}
+
+body {
+  color: var(--text-d);
+  background:
+    linear-gradient(180deg, rgba(0,17,41,0.78) 0%, rgba(0,17,41,0.92) 38%, rgba(0,15,36,0.96) 100%),
+    url('/fondo-infotrack.jpeg') top center / cover fixed no-repeat;
+  background-color: #00112a;
+  min-height: 100vh;
+}
+
+/* Header */
+.dashboard__subtitle { color: var(--text-muted); }
+.dashboard__badge { background: rgba(0,104,255,0.18); color: #79b4ff; }
+.dashboard__live { color: var(--brand-cyan); }
+
+/* KPIs */
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border-d);
+  border-top: 3px solid var(--accent, var(--brand-blue));
+  backdrop-filter: blur(8px);
+}
+.kpi__label { color: var(--text-strong); }
+.kpi__value { color: #ffffff; }
+.kpi__value--date { color: var(--text-muted); }
+
+/* Pestañas */
+.tabs { border-bottom-color: var(--border-d); }
+.tab { color: var(--text-muted); }
+.tab:hover { color: var(--text-d); }
+.tab--active { color: var(--brand-cyan); border-bottom-color: var(--brand-cyan); }
+
+/* Gráficos */
+.metricbar__label, .metricbar__grouplabel { color: var(--text-muted); }
+.metricbar__group { border-left-color: var(--border-d); }
+.metricbar__btn { background: var(--surface-2); border-color: var(--border-d); color: var(--text-d); }
+.metricbar__btn--active { background: var(--brand-blue); border-color: var(--brand-blue); color: #fff; }
+.chart {
+  background: var(--surface);
+  border: 1px solid var(--border-d);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 18px rgba(0,0,0,.25);
+}
+.chart__title { color: var(--text-strong); }
+
+/* Filtros */
+.filterbar__search {
+  background: var(--surface-2);
+  border-color: var(--border-d);
+  color: var(--text-d);
+}
+.filterbar__search::placeholder { color: var(--text-muted); }
+.daterange { background: var(--surface-2); border-color: var(--border-d); }
+.daterange__label, .daterange__sep { color: var(--text-muted); }
+.daterange__input { color: var(--text-d); }
+.ms__btn { background: var(--surface-2); border-color: var(--border-d); color: var(--text-d); }
+.ms__btn--active { background: rgba(0,104,255,0.22); border-color: var(--brand-blue); color: #9fc6ff; }
+.ms__menu { background: #0a2748; border-color: var(--border-d); box-shadow: 0 12px 34px rgba(0,0,0,.5); }
+.ms__opt { color: var(--text-d); }
+.ms__opt:hover { background: rgba(255,255,255,0.06); }
+.ms__actions button { background: var(--surface-2); color: var(--text-muted); }
+.ms__caret { color: var(--text-muted); }
+
+/* Tabla */
+.tablebar, .tabletoggle { color: var(--text-muted); }
+.pagesize__label { color: var(--text-muted); }
+.pagesize__btn { background: var(--surface-2); border-color: var(--border-d); color: var(--text-d); }
+.pagesize__btn--active { background: var(--brand-blue); border-color: var(--brand-blue); color: #fff; }
+.tablewrap { background: var(--surface); border: 1px solid var(--border-d); backdrop-filter: blur(8px); }
+.ptable thead th { background: #0a2748; color: var(--text-muted); border-bottom-color: var(--border-d); }
+.ptable thead th.calc { background: #0d2f57; color: #79b4ff; }
+.ptable tbody td { border-bottom-color: rgba(255,255,255,0.07); color: var(--text-d); }
+.ptable tbody tr:hover { background: rgba(255,255,255,0.04); }
+.ptable th.month, .ptable td.month { background: rgba(255,255,255,0.03); }
+.ptable th.month { color: #8fd3ff; }
+.ptable__empty { color: var(--text-muted); }
+.pager__info, .pager__page { color: var(--text-muted); }
+.pager__nav button { background: var(--surface-2); border-color: var(--border-d); color: var(--text-d); }
+
+/* Métricas personalizadas */
+.custommetrics__hint { color: var(--text-muted); }
+.custommetrics__empty { background: var(--surface); border-color: var(--border-d); color: var(--text-muted); }
+.cmbtn { background: var(--surface-2); border-color: var(--border-d); color: var(--text-d); }
+.cmbtn--primary { background: var(--brand-blue); border-color: var(--brand-blue); color: #fff; }
+.cmbuilder { background: var(--surface); border: 1px solid var(--border-d); backdrop-filter: blur(8px); }
+.cmfield span, .cmbuilder__label, .cmdate__label { color: var(--text-muted); }
+.cmfield input, .cmfield select, .cmcond > select, .cmdate__input {
+  background: var(--surface-2); border-color: var(--border-d); color: var(--text-d);
+}
+.cmbuilder__add { background: var(--surface-2); border-color: var(--border-d); color: #79b4ff; }
+.cmcard { background: var(--surface); border: 1px solid var(--border-d); border-top: 3px solid var(--brand-cyan); backdrop-filter: blur(8px); }
+.cmcard__name { color: #ffffff; }
+.cmcard__metric, .cmcard__count, .cmcard__goaltext { color: var(--text-muted); }
+.cmcard__value { color: #ffffff; }
+.cmcard__actions button { background: var(--surface-2); }
+.cmbar { background: rgba(255,255,255,0.1); }
+.cmchip { background: var(--surface-2); color: var(--text-d); }

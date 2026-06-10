@@ -91,9 +91,9 @@ export default function Charts({ rows }) {
         {/* Composición detallada: las 5 líneas de producto apiladas por comercial */}
         <Card title="Booking detallado por producto y comercial" wide>
           <BarChart data={stackComercial} margin={{ left: 10, right: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-            <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-20} textAnchor="end" height={70} />
-            <YAxis tickFormatter={(v) => fmtCompact(v).replace('$', '')} tick={{ fontSize: 11 }} width={48} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.09)" />
+            <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#9fb3c8" }} interval={0} angle={-20} textAnchor="end" height={70} />
+            <YAxis tickFormatter={(v) => fmtCompact(v).replace('$', '')} tick={{ fontSize: 11, fill: "#9fb3c8" }} width={48} />
             <Tooltip formatter={fmtMoney} />
             <Legend />
             {LINEA_LABELS.map((l) => (
@@ -115,9 +115,9 @@ export default function Charts({ rows }) {
                 <stop offset="100%" stopColor="#00c6ff" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-            <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-            <YAxis tickFormatter={(v) => fmtCompact(v).replace('$', '')} tick={{ fontSize: 11 }} width={48} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.09)" />
+            <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#9fb3c8" }} />
+            <YAxis tickFormatter={(v) => fmtCompact(v).replace('$', '')} tick={{ fontSize: 11, fill: "#9fb3c8" }} width={48} />
             <Tooltip formatter={fmtMoney} />
             <Legend />
             <Area type="monotone" dataKey="facturacion" name="Facturación" stroke="#0068ff" fill="url(#gFact)" strokeWidth={2} />
@@ -128,9 +128,9 @@ export default function Charts({ rows }) {
         {/* MCB por producto (siempre en dinero) */}
         <Card title="MCB por línea de producto">
           <BarChart data={mcb} margin={{ left: 10, right: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-            <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-            <YAxis tickFormatter={(v) => fmtCompact(v).replace('$', '')} tick={{ fontSize: 11 }} width={48} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.09)" />
+            <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#9fb3c8" }} />
+            <YAxis tickFormatter={(v) => fmtCompact(v).replace('$', '')} tick={{ fontSize: 11, fill: "#9fb3c8" }} width={48} />
             <Tooltip formatter={fmtMoney} />
             <Bar dataKey="value" name="MCB" radius={[4, 4, 0, 0]}>
               {mcb.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
@@ -159,9 +159,9 @@ export default function Charts({ rows }) {
           return (
             <Card title={title} key={dim.key}>
               <BarChart data={data} layout="vertical" margin={{ left: 10, right: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-                <XAxis type="number" tickFormatter={axisFmt} tick={{ fontSize: 11 }} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={150} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.09)" />
+                <XAxis type="number" tickFormatter={axisFmt} tick={{ fontSize: 11, fill: "#9fb3c8" }} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#9fb3c8" }} width={150} />
                 <Tooltip formatter={fmt} />
                 <Bar dataKey="value" name={metric.label} fill={COLORS[0]} radius={[0, 4, 4, 0]} />
               </BarChart>
