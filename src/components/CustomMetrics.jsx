@@ -4,6 +4,8 @@ import {
   loadMetrics, saveMetrics, newMetricDef,
 } from '../lib/customMetrics'
 import { fmtMoney, fmtNum, fmtDate } from '../lib/format'
+import { useAuth } from '../context/AuthContext'
+import { fetchSharedMetrics, upsertSharedMetric, deleteSharedMetric } from '../services/metricsApi'
 import MultiSelect from './MultiSelect'
 
 const fmtVal = (key, v) => (metricMeta(key).money ? fmtMoney(v) : fmtNum(v))
@@ -156,22 +158,35 @@ function Builder({ rows, draft, setDraft, onSave, onCancel }) {
 }
 
 export default function CustomMetrics({ rows }) {
-  const [metrics, setMetrics] = useState(loadMetrics)
+  const { authEnabled } = useAuth()
+  const shared = authEnabled === true // con DB: métricas compartidas en el servidor
+  const [metrics, setMetrics] = useState(shared ? [] : loadMetrics)
   const [draft, setDraft] = useState(null) // def en edición o null
 
-  useEffect(() => { saveMetrics(metrics) }, [metrics])
+  // Carga inicial: del servidor (compartidas) o de localStorage (local)
+  useEffect(() => {
+    if (shared) fetchSharedMetrics().then(setMetrics).catch(() => setMetrics([]))
+    else setMetrics(loadMetrics())
+  }, [shared])
+
+  // En modo local, persistimos en localStorage
+  useEffect(() => { if (!shared) saveMetrics(metrics) }, [metrics, shared])
 
   const startNew = () => setDraft(newMetricDef())
   const startEdit = (def) => setDraft({ ...def, conditions: def.conditions.map((c) => ({ ...c })) })
   const cancel = () => setDraft(null)
-  const save = () => {
+  const save = async () => {
     setMetrics((ms) => {
       const exists = ms.some((m) => m.id === draft.id)
       return exists ? ms.map((m) => (m.id === draft.id ? draft : m)) : [...ms, draft]
     })
+    if (shared) { try { await upsertSharedMetric(draft) } catch { /* noop */ } }
     setDraft(null)
   }
-  const remove = (id) => setMetrics((ms) => ms.filter((m) => m.id !== id))
+  const remove = async (id) => {
+    setMetrics((ms) => ms.filter((m) => m.id !== id))
+    if (shared) { try { await deleteSharedMetric(id) } catch { /* noop */ } }
+  }
 
   return (
     <div className="custommetrics">

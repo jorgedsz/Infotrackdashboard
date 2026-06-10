@@ -30,11 +30,23 @@ npm run build   # genera dist/
 npm start       # Express sirve dist/ + la API
 ```
 
+## Autenticación (login con Postgres)
+
+- Si **`DATABASE_URL`** está presente, se activa el login: los datos quedan protegidos y se
+  requiere iniciar sesión. Sin `DATABASE_URL` (dev local), el dashboard queda abierto.
+- Al arrancar se crea la tabla `users` y, si no existe, el **admin inicial** definido por
+  `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
+- Los usuarios los crea un **admin** desde la pestaña *Usuarios*.
+- Las métricas personalizadas pasan a guardarse en la base de datos (compartidas) cuando hay auth.
+
 ## Deploy en Railway
 
 1. Conecta este repo en Railway (build/start ya definidos en `railway.json`).
-2. Carga las variables de entorno (`GHL_TOKEN`, `GHL_LOCATION_ID`, `GHL_PIPELINE_ID`).
-3. Railway expone el servicio; el dashboard queda en la raíz `/infotrack-dashboard`.
+2. Agrega un **PostgreSQL** al proyecto (New → Database → PostgreSQL). Railway crea `DATABASE_URL`.
+3. Carga las variables de entorno del servicio:
+   - GHL: `GHL_TOKEN`, `GHL_LOCATION_ID`, `GHL_PIPELINE_ID`
+   - Auth: `DATABASE_URL` (referencia la del Postgres), `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`
+4. Railway expone el servicio; el dashboard queda en `/infotrack-dashboard` y pedirá login.
 
 ## Notas
 

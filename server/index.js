@@ -6,10 +6,14 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { getCustomFields, getPipelines, searchOpportunities, getUsers } from './ghl.js'
 import { mapAll, FIELD_MAP } from './mapping.js'
+import { initDb, AUTH_ENABLED } from './db.js'
+import { mountAuthRoutes, requireAuth, requireAdmin } from './auth.js'
+import { mountMetricsRoutes } from './metrics.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
 app.use(cors())
+app.use(express.json())
 
 const PORT = process.env.PORT || 3001
 const LOCATION = process.env.GHL_LOCATION_ID
@@ -49,19 +53,42 @@ async function refresh() {
   return cache
 }
 
+// --- Auth + métricas compartidas ---
+mountAuthRoutes(app)
+mountMetricsRoutes(app)
+
 // --- Endpoints ---
 app.get('/api/health', (_req, res) =>
-  res.json({ ok: true, configured: configured(), source: cache.source, updatedAt: cache.updatedAt, rows: cache.rows.length, error: cache.error })
+  res.json({ ok: true, configured: configured(), authEnabled: AUTH_ENABLED, source: cache.source, updatedAt: cache.updatedAt, rows: cache.rows.length, error: cache.error })
 )
 
-// Filas crudas del pipeline (el frontend las enriquece con el motor de cálculo).
-app.get('/api/pipeline', (_req, res) =>
-  res.json({ rows: cache.rows, source: cache.source, updatedAt: cache.updatedAt, error: cache.error })
+// Restringe las filas según el usuario: admin o "ver todo" => todo;
+// si no, solo las oportunidades de su comercial asignado.
+function rowsForUser(user) {
+  if (!AUTH_ENABLED || !user) return cache.rows
+  if (user.role === 'admin' || user.view_all) return cache.rows
+  const asignados = Array.isArray(user.comerciales) ? user.comerciales : []
+  if (asignados.length === 0) return [] // restringido sin comerciales => nada
+  const set = new Set(asignados)
+  return cache.rows.filter((r) => set.has(r.comercial))
+}
+
+// Filas crudas del pipeline (protegido y filtrado por usuario cuando AUTH está activo).
+app.get('/api/pipeline', requireAuth, (req, res) =>
+  res.json({ rows: rowsForUser(req.user), source: cache.source, updatedAt: cache.updatedAt, error: cache.error })
 )
+
+// Lista de comerciales (para asignar a usuarios). Solo admin.
+app.get('/api/comerciales', requireAuth, requireAdmin, (_req, res) => {
+  const set = [...new Set(cache.rows.map((r) => r.comercial).filter(Boolean))].sort((a, b) =>
+    String(a).localeCompare(String(b), 'es')
+  )
+  res.json({ comerciales: set })
+})
 
 // Fuerza un refresh manual desde GHL.
-app.post('/api/refresh', async (_req, res) => res.json(await refresh()))
-app.get('/api/refresh', async (_req, res) => res.json(await refresh()))
+app.post('/api/refresh', requireAuth, async (_req, res) => res.json(await refresh()))
+app.get('/api/refresh', requireAuth, async (_req, res) => res.json(await refresh()))
 
 // --- Descubrimiento (para armar el mapeo de custom fields) ---
 app.get('/api/ghl/custom-fields', async (req, res) => {
@@ -95,6 +122,7 @@ if (existsSync(DIST)) {
 
 app.listen(PORT, async () => {
   console.log(`[infotrack] API en http://localhost:${PORT} | GHL ${configured() ? 'configurado' : 'NO configurado (usando seed)'}`)
+  try { await initDb() } catch (e) { console.error('[infotrack] Error init DB:', e.message) }
   await refresh()
   if (configured()) setInterval(refresh, REFRESH_MS)
 })

@@ -7,6 +7,8 @@ import KpiBar from '../components/KpiBar'
 import Charts from '../components/Charts'
 import PipelineTable from '../components/PipelineTable'
 import CustomMetrics from '../components/CustomMetrics'
+import UsersAdmin from '../components/UsersAdmin'
+import { useAuth } from '../context/AuthContext'
 
 const emptyFilters = () => Object.fromEntries(FILTER_COLUMNS.map((c) => [c.key, new Set()]))
 
@@ -18,6 +20,7 @@ const SOURCE_LABEL = {
 }
 
 export default function InfoTrackDashboard() {
+  const { user, authEnabled, logout } = useAuth()
   const [rawRows, setRawRows] = useState([])
   const [meta, setMeta] = useState({ source: null, updatedAt: null, error: null })
   const [loading, setLoading] = useState(true)
@@ -85,6 +88,12 @@ export default function InfoTrackDashboard() {
             </button>
             <span className="dashboard__live">auto cada 30s</span>
           </div>
+          {authEnabled && user && (
+            <div className="dashboard__user">
+              <span className="dashboard__useremail" title={user.email}>{user.name || user.email}</span>
+              <button className="dashboard__logout" onClick={logout}>Salir</button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -111,11 +120,17 @@ export default function InfoTrackDashboard() {
         <button className={'tab' + (tab === 'metricas' ? ' tab--active' : '')} onClick={() => setTab('metricas')}>
           Mis Métricas
         </button>
+        {user?.role === 'admin' && (
+          <button className={'tab' + (tab === 'usuarios' ? ' tab--active' : '')} onClick={() => setTab('usuarios')}>
+            Usuarios
+          </button>
+        )}
       </nav>
 
       {tab === 'tabla' && <PipelineTable rows={filtered} />}
       {tab === 'graficos' && <Charts rows={filtered} />}
       {tab === 'metricas' && <CustomMetrics rows={allRows} />}
+      {tab === 'usuarios' && user?.role === 'admin' && <UsersAdmin />}
     </div>
   )
 }

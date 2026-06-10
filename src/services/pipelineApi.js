@@ -1,10 +1,10 @@
-// Carga las filas del pipeline desde el backend (/api/pipeline).
+// Carga las filas del pipeline desde el backend (/api/pipeline) con el token de sesión.
 // La data real vive en GoHighLevel; no se empaqueta ningún seed en el repo.
+import { apiFetch } from './http'
+
 export async function loadPipeline() {
   try {
-    const res = await fetch('/api/pipeline', { cache: 'no-store' })
-    if (!res.ok) throw new Error('backend ' + res.status)
-    const data = await res.json()
+    const data = await apiFetch('/api/pipeline')
     return {
       rows: data.rows || [],
       source: data.source || 'backend',
