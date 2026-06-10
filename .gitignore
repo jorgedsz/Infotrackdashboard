@@ -9,3 +9,6 @@ dist
 *.csv
 # Seed con data real del CRM — no se versiona (la data viene en vivo de GHL)
 src/data/pipeline.json
+
+# Logo original redundante (se usa public/logo-infotrack.png)
+/Logo Infotrack Color  (1).png

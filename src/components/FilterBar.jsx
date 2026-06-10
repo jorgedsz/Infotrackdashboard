@@ -20,53 +20,59 @@ export default function FilterBar({ rows, filters, setFilters, search, setSearch
 
   return (
     <div className="filterbar">
-      <input
-        className="filterbar__search"
-        placeholder="Buscar empresa, proyecto, # oport…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-      {FILTER_COLUMNS.map((col) => {
-        const options = [...new Set(rows.map((r) => r[col.key] ?? ''))].sort((a, b) =>
-          String(a).localeCompare(String(b), 'es')
-        )
-        return (
-          <MultiSelect
-            key={col.key}
-            label={col.label}
-            options={options}
-            value={filters[col.key] || new Set()}
-            onChange={(set) => setCol(col.key, set)}
-          />
-        )
-      })}
+      {/* Búsqueda arriba, a todo lo ancho */}
+      <div className="filterbar__searchrow">
+        <input
+          className="filterbar__search"
+          placeholder="🔍  Buscar empresa, proyecto, # oportunidad…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {activeCount > 0 && (
+          <button className="filterbar__reset" onClick={onReset}>
+            Limpiar ({activeCount})
+          </button>
+        )}
+      </div>
 
-      {DATE_RANGES.map(({ key, label }) => (
-        <div className="daterange" key={key}>
-          <span className="daterange__label">{label}:</span>
-          <input
-            type="date"
-            className="daterange__input"
-            value={dateFilters?.[key]?.from || ''}
-            onChange={(e) => setDate(key, 'from', e.target.value)}
-            title={`${label} desde`}
-          />
-          <span className="daterange__sep">–</span>
-          <input
-            type="date"
-            className="daterange__input"
-            value={dateFilters?.[key]?.to || ''}
-            onChange={(e) => setDate(key, 'to', e.target.value)}
-            title={`${label} hasta`}
-          />
-        </div>
-      ))}
+      {/* Filtros + rangos de fecha debajo */}
+      <div className="filterbar__filters">
+        {FILTER_COLUMNS.map((col) => {
+          const options = [...new Set(rows.map((r) => r[col.key] ?? ''))].sort((a, b) =>
+            String(a).localeCompare(String(b), 'es')
+          )
+          return (
+            <MultiSelect
+              key={col.key}
+              label={col.label}
+              options={options}
+              value={filters[col.key] || new Set()}
+              onChange={(set) => setCol(col.key, set)}
+            />
+          )
+        })}
 
-      {activeCount > 0 && (
-        <button className="filterbar__reset" onClick={onReset}>
-          Limpiar ({activeCount})
-        </button>
-      )}
+        {DATE_RANGES.map(({ key, label }) => (
+          <div className="daterange" key={key}>
+            <span className="daterange__label">{label}</span>
+            <input
+              type="date"
+              className="daterange__input"
+              value={dateFilters?.[key]?.from || ''}
+              onChange={(e) => setDate(key, 'from', e.target.value)}
+              title={`${label} desde`}
+            />
+            <span className="daterange__sep">–</span>
+            <input
+              type="date"
+              className="daterange__input"
+              value={dateFilters?.[key]?.to || ''}
+              onChange={(e) => setDate(key, 'to', e.target.value)}
+              title={`${label} hasta`}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

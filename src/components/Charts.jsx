@@ -6,8 +6,9 @@ import {
 import { sumBy, seriesMensual, mcbPorProducto, stackPorProducto, LINEA_LABELS } from '../lib/aggregate'
 import { fmtCompact, fmtMoney, fmtNum } from '../lib/format'
 
-const COLORS = ['#6366f1', '#0ea5e9', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '#ef4444', '#84cc16', '#f97316', '#a3a3a3']
-const LINEA_COLORS = { SUMHW: '#6366f1', HWAAS: '#0ea5e9', SVCS: '#22c55e', SWTER: '#f59e0b', SOLSS: '#ec4899' }
+// Paleta basada en la marca InfoTrack (azules + grises + tintes derivados)
+const COLORS = ['#0068ff', '#002149', '#00c6ff', '#4b5160', '#6b7480', '#3385ff', '#0a4f9e', '#5ad8ff', '#94a3b0', '#80b4ff', '#013a7a']
+const LINEA_COLORS = { SUMHW: '#002149', HWAAS: '#0068ff', SVCS: '#00c6ff', SWTER: '#6b7480', SOLSS: '#3385ff' }
 
 // Métricas seleccionables que aplican a todos los gráficos de dimensión.
 // Grupo "Totales" (montos generales) + grupo "Detallado por producto".
@@ -106,12 +107,12 @@ export default function Charts({ rows }) {
           <AreaChart data={mensual} margin={{ left: 10, right: 10 }}>
             <defs>
               <linearGradient id="gFact" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#6366f1" stopOpacity={0.4} />
-                <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                <stop offset="0%" stopColor="#0068ff" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#0068ff" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="gMb" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#22c55e" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+                <stop offset="0%" stopColor="#00c6ff" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#00c6ff" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
@@ -119,8 +120,8 @@ export default function Charts({ rows }) {
             <YAxis tickFormatter={(v) => fmtCompact(v).replace('$', '')} tick={{ fontSize: 11 }} width={48} />
             <Tooltip formatter={fmtMoney} />
             <Legend />
-            <Area type="monotone" dataKey="facturacion" name="Facturación" stroke="#6366f1" fill="url(#gFact)" strokeWidth={2} />
-            <Area type="monotone" dataKey="mb" name="Margen Bruto" stroke="#22c55e" fill="url(#gMb)" strokeWidth={2} />
+            <Area type="monotone" dataKey="facturacion" name="Facturación" stroke="#0068ff" fill="url(#gFact)" strokeWidth={2} />
+            <Area type="monotone" dataKey="mb" name="Margen Bruto" stroke="#00c6ff" fill="url(#gMb)" strokeWidth={2} />
           </AreaChart>
         </Card>
 

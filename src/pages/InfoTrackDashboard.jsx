@@ -71,21 +71,19 @@ export default function InfoTrackDashboard() {
   return (
     <div className="dashboard">
       <header className="dashboard__header">
-        <div>
-          <h1>InfoTrack Dashboard</h1>
-          <p className="dashboard__subtitle">
-            Pipeline Total · {SOURCE_LABEL[meta.source] || 'cargando…'}
-            {meta.updatedAt && ` · actualizado ${new Date(meta.updatedAt).toLocaleTimeString('es-CO')}`}
-            <span className="dashboard__live"> · auto cada 30s</span>
-          </p>
+        <div className="dashboard__brand">
+          <img className="dashboard__logo" src="/logo-infotrack.png" alt="InfoTrack" />
         </div>
         <div className="dashboard__actions">
           <span className="dashboard__badge">
             {loading ? 'cargando…' : `${filtered.length} / ${allRows.length} oportunidades`}
           </span>
-          <button className="dashboard__refresh" onClick={fetchData} disabled={refreshing} title="Actualizar ahora">
-            {refreshing ? '↻ …' : '↻ Actualizar'}
-          </button>
+          <div className="dashboard__refreshcol">
+            <button className="dashboard__refresh" onClick={fetchData} disabled={refreshing} title="Actualizar ahora">
+              {refreshing ? '↻ …' : '↻ Actualizar'}
+            </button>
+            <span className="dashboard__live">auto cada 30s</span>
+          </div>
         </div>
       </header>
 
