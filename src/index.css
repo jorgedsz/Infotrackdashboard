@@ -647,3 +647,13 @@ body {
 }
 .viewsbar__btn--primary { background: var(--brand-blue); border-color: var(--brand-blue); color: #fff; }
 .viewsbar__btn--danger { background: rgba(220,38,38,.18); border-color: rgba(220,38,38,.4); color: #ff9a9a; }
+
+/* ---------- Exportar ---------- */
+.tablebar__right { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.exportbar { display: inline-flex; align-items: center; gap: 6px; }
+.exportbar__label { font-size: 13px; font-weight: 700; color: var(--text-muted); }
+.exportbar__btn {
+  background: var(--surface-2); border: 1px solid var(--border-d); color: var(--text-d);
+  border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.exportbar__btn:hover { border-color: var(--brand-blue); color: #9fc6ff; }

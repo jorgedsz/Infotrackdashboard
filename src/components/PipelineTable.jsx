@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { COLUMNS, renderCell } from '../lib/columns'
+import { exportCSV, exportXLSX, exportPDF } from '../lib/export'
 
 const PAGE_SIZES = [25, 50, 100, 'Todas']
 
@@ -47,17 +48,25 @@ export default function PipelineTable({ rows }) {
           <input type="checkbox" checked={showMonthly} onChange={(e) => setShowMonthly(e.target.checked)} />
           Ver desglose mensual (Facturación y MB · Ene–Dic)
         </label>
-        <div className="pagesize">
-          <span className="pagesize__label">Por página:</span>
-          {PAGE_SIZES.map((s) => (
-            <button
-              key={s}
-              className={'pagesize__btn' + (pageSize === s ? ' pagesize__btn--active' : '')}
-              onClick={() => setPageSize(s)}
-            >
-              {s}
-            </button>
-          ))}
+        <div className="tablebar__right">
+          <div className="exportbar">
+            <span className="exportbar__label">Exportar:</span>
+            <button className="exportbar__btn" onClick={() => exportCSV(sorted, cols)}>CSV</button>
+            <button className="exportbar__btn" onClick={() => exportXLSX(sorted, cols)}>XLSX</button>
+            <button className="exportbar__btn" onClick={() => exportPDF(sorted, cols)}>PDF</button>
+          </div>
+          <div className="pagesize">
+            <span className="pagesize__label">Por página:</span>
+            {PAGE_SIZES.map((s) => (
+              <button
+                key={s}
+                className={'pagesize__btn' + (pageSize === s ? ' pagesize__btn--active' : '')}
+                onClick={() => setPageSize(s)}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

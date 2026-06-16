@@ -17,6 +17,9 @@ export const pool = AUTH_ENABLED
   ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: sslConfig(process.env.DATABASE_URL) })
   : null
 
+// Evita que una conexión inactiva caída (Railway corta idle) tumbe el proceso.
+if (pool) pool.on('error', (err) => console.error('[infotrack] pool PG error (ignorado):', err.message))
+
 export async function query(text, params) {
   if (!pool) throw new Error('Base de datos no configurada (falta DATABASE_URL)')
   return pool.query(text, params)
