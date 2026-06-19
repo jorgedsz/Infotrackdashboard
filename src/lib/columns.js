@@ -36,8 +36,6 @@ export const COLUMNS = [
   { key: 'fuenteLead', label: 'Fuente de Lead', type: 'text', filter: 'category' },
   { key: 'margenMix', label: 'Margen Mix', type: 'pctraw', filter: null },
   { key: 'areaNegocio', label: 'Área de Negocio', type: 'text', filter: 'category' },
-  { key: 'fechaCreacion', label: 'F. Creación', type: 'date', filter: null },
-  { key: 'fechaCierre', label: 'F. Cierre', type: 'date', filter: null },
   // --- columnas calculadas ---
   { key: 'tipoVenta', label: 'Tipo Venta', type: 'text', filter: 'category', calc: true },
   { key: 'venta', label: 'Venta', type: 'text', filter: 'category', calc: true },
@@ -50,6 +48,9 @@ export const COLUMNS = [
   { key: 'totalMB', label: 'Total MB', type: 'money', filter: null, calc: true },
   ...mesesCols('mb', 'MB'),
   { key: 'sensibilizado', label: 'Pipeline Sensibilizado', type: 'money', filter: null, calc: true },
+  // --- fechas al final ---
+  { key: 'fechaCreacion', label: 'F. Creación', type: 'date', filter: null },
+  { key: 'fechaCierre', label: 'F. Cierre', type: 'date', filter: null },
 ]
 
 export const FILTER_COLUMNS = COLUMNS.filter((c) => c.filter === 'category')
