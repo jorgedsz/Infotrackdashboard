@@ -8,7 +8,7 @@ const PDF_KEYS = ['comercial', 'empresa', 'pais', 'estado', 'fase', 'lineaNegoci
 // Valor "crudo" para exportar: números como números, fechas legibles, texto plano.
 function exportValue(col, row) {
   const v = row[col.key]
-  if (col.type === 'money' || col.type === 'num') return v == null ? 0 : v
+  if (col.type === 'money' || col.type === 'num' || col.type === 'pctraw') return v == null ? 0 : v
   if (col.type === 'pct') return v == null ? 0 : v
   if (col.type === 'date') return v ? fmtDate(v) : ''
   return v == null ? '' : String(v)

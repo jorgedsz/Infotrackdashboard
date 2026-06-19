@@ -23,11 +23,19 @@ export const COLUMNS = [
   { key: 'fase', label: 'Fase', type: 'text', filter: 'category' },
   { key: 'empresa', label: 'Empresa', type: 'text', filter: 'search' },
   { key: 'bookingTotal', label: 'Booking Total', type: 'money', filter: null },
+  { key: 'sumhw', label: '$ SUMHW', type: 'money', filter: null },
+  { key: 'hwaas', label: '$ HWAAS', type: 'money', filter: null },
+  { key: 'svcs', label: '$ SVCS', type: 'money', filter: null },
+  { key: 'swter', label: '$ SWTER', type: 'money', filter: null },
+  { key: 'swss', label: '$ SOLSS', type: 'money', filter: null },
   { key: 'lineaNegocio', label: 'Línea Negocio', type: 'text', filter: 'category' },
   { key: 'aliado', label: 'Aliado', type: 'text', filter: 'category' },
   { key: 'kare', label: 'KARE', type: 'text', filter: 'category' },
   { key: 'probabilidadCierre', label: 'Prob. Cierre', type: 'text', filter: 'category' },
   { key: 'tiempoContrato', label: 'Contrato', type: 'text', filter: 'category' },
+  { key: 'fuenteLead', label: 'Fuente de Lead', type: 'text', filter: 'category' },
+  { key: 'margenMix', label: 'Margen Mix', type: 'pctraw', filter: null },
+  { key: 'areaNegocio', label: 'Área de Negocio', type: 'text', filter: 'category' },
   { key: 'fechaCreacion', label: 'F. Creación', type: 'date', filter: null },
   { key: 'fechaCierre', label: 'F. Cierre', type: 'date', filter: null },
   // --- columnas calculadas ---
@@ -52,6 +60,7 @@ export function renderCell(col, row) {
     case 'money': return fmtMoney(v)
     case 'num': return fmtNum(v)
     case 'pct': return fmtPct(v)
+    case 'pctraw': return v == null || v === '' ? '—' : `${fmtNum(v)}%` // valor ya en porcentaje (20 => 20%)
     case 'date': return fmtDate(v)
     default: return v === '' || v == null ? '—' : v
   }

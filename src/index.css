@@ -657,3 +657,16 @@ body {
   border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 700; cursor: pointer;
 }
 .exportbar__btn:hover { border-color: var(--brand-blue); color: #9fc6ff; }
+
+/* Fila de totales al pie de la tabla */
+.ptable tfoot .ptable__totals td {
+  position: sticky;
+  bottom: 0;
+  background: #0a2748;
+  color: #ffffff;
+  font-weight: 800;
+  border-top: 2px solid var(--brand-blue);
+  font-size: 13px;
+  z-index: 2;
+}
+.ptable tfoot .ptable__totals td.month { background: #0d2f57; color: #8fd3ff; }

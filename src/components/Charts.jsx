@@ -3,7 +3,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   PieChart, Pie, Cell, AreaChart, Area,
 } from 'recharts'
-import { sumBy, seriesMensual, mcbPorProducto, stackPorProducto, LINEA_LABELS } from '../lib/aggregate'
+import { sumBy, seriesMensual, mcbPorProducto, bookingPorLinea, stackPorProducto, LINEA_LABELS } from '../lib/aggregate'
 import { fmtCompact, fmtMoney, fmtNum } from '../lib/format'
 
 // Paleta basada en la marca InfoTrack (azules + grises + tintes derivados)
@@ -37,6 +37,8 @@ const DIMENSIONS = [
   { key: 'arquitecto', label: 'Arquitecto', layout: 'vertical' },
   { key: 'probabilidadCierre', label: 'Probabilidad de Cierre', layout: 'vertical' },
   { key: 'tiempoContrato', label: 'Tiempo de Contrato', layout: 'vertical' },
+  { key: 'areaNegocio', label: 'Área de Negocio', layout: 'vertical' },
+  { key: 'fuenteLead', label: 'Fuente de Lead', layout: 'pie' },
   { key: 'pais', label: 'País', layout: 'pie' },
   { key: 'empresaInterna', label: 'Empresa Interna', layout: 'pie' },
   { key: 'tipoVenta', label: 'Tipo Venta (Nuevo/Renovación)', layout: 'pie' },
@@ -63,6 +65,7 @@ export default function Charts({ rows }) {
 
   const mensual = useMemo(() => seriesMensual(rows), [rows])
   const mcb = useMemo(() => mcbPorProducto(rows), [rows])
+  const bookingLinea = useMemo(() => bookingPorLinea(rows), [rows])
   const stackComercial = useMemo(() => stackPorProducto(rows, 'comercial', { top: 10 }), [rows])
 
   const groups = ['Totales', 'Por producto']
@@ -123,6 +126,19 @@ export default function Charts({ rows }) {
             <Area type="monotone" dataKey="facturacion" name="Facturación" stroke="#0068ff" fill="url(#gFact)" strokeWidth={2} />
             <Area type="monotone" dataKey="mb" name="Margen Bruto" stroke="#00c6ff" fill="url(#gMb)" strokeWidth={2} />
           </AreaChart>
+        </Card>
+
+        {/* Total de Booking por línea de producto */}
+        <Card title="Booking total por línea de producto">
+          <BarChart data={bookingLinea} margin={{ left: 10, right: 10 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.09)" />
+            <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#9fb3c8" }} />
+            <YAxis tickFormatter={(v) => fmtCompact(v).replace('$', '')} tick={{ fontSize: 11, fill: "#9fb3c8" }} width={48} />
+            <Tooltip formatter={fmtMoney} />
+            <Bar dataKey="value" name="Booking" radius={[4, 4, 0, 0]}>
+              {bookingLinea.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+            </Bar>
+          </BarChart>
         </Card>
 
         {/* MCB por producto (siempre en dinero) */}

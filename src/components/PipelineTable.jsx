@@ -39,7 +39,18 @@ export default function PipelineTable({ rows }) {
   const toggleSort = (key) =>
     setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'desc' }))
 
-  const isNum = (col) => col.type === 'money' || col.type === 'num' || col.type === 'pct'
+  const isNum = (col) => ['money', 'num', 'pct', 'pctraw'].includes(col.type)
+
+  // Totales por columna (suma) sobre TODAS las filas filtradas, no solo la página
+  const totals = useMemo(() => {
+    const t = {}
+    for (const c of cols) {
+      if (c.type === 'money' || c.type === 'num') {
+        t[c.key] = sorted.reduce((a, r) => a + (r[c.key] || 0), 0)
+      }
+    }
+    return t
+  }, [sorted, cols])
 
   return (
     <div>
@@ -104,6 +115,17 @@ export default function PipelineTable({ rows }) {
               <tr><td colSpan={cols.length} className="ptable__empty">Sin resultados con los filtros actuales</td></tr>
             )}
           </tbody>
+          {total > 0 && (
+            <tfoot>
+              <tr className="ptable__totals">
+                {cols.map((col, i) => (
+                  <td key={col.key} className={(isNum(col) ? 'num ' : '') + (col.monthly ? 'month' : '')}>
+                    {i === 0 ? `TOTALES (${total})` : (col.key in totals ? renderCell(col, totals) : '')}
+                  </td>
+                ))}
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 

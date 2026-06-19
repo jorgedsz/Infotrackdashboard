@@ -83,6 +83,14 @@ export function stackPorProducto(rows, dimKey, { top = 10 } = {}) {
   return arr
 }
 
+// Total de Booking ($) por línea de producto.
+export function bookingPorLinea(rows) {
+  const acc = { sumhw: 0, hwaas: 0, svcs: 0, swter: 0, swss: 0 }
+  for (const r of rows) for (const k of Object.keys(acc)) acc[k] += r[k] || 0
+  const label = { sumhw: 'SUMHW', hwaas: 'HWAAS', svcs: 'SVCS', swter: 'SWTER', swss: 'SOLSS' }
+  return Object.entries(acc).map(([k, v]) => ({ name: label[k], value: v }))
+}
+
 // Desglose de MCB por línea de producto.
 export function mcbPorProducto(rows) {
   const acc = { sumhw: 0, hwaas: 0, svcs: 0, swter: 0, swss: 0 }
