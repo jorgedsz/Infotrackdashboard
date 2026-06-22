@@ -80,9 +80,10 @@ export async function exportPDF(rows, allColumns, base = 'pipeline') {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' })
   const pageW = doc.internal.pageSize.getWidth()
 
-  // Columnas clave (en orden), tomadas de las disponibles
+  // Columnas clave (en orden); si no hay match (otro pipeline), usa las primeras disponibles
   const byKey = Object.fromEntries(allColumns.map((c) => [c.key, c]))
-  const cols = PDF_KEYS.map((k) => byKey[k]).filter(Boolean)
+  let cols = PDF_KEYS.map((k) => byKey[k]).filter(Boolean)
+  if (cols.length === 0) cols = allColumns.slice(0, 10)
 
   // Encabezado: logo + título
   const logo = await loadLogo()

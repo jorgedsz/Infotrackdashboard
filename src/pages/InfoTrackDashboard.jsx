@@ -9,6 +9,7 @@ import PipelineTable from '../components/PipelineTable'
 import CustomMetrics from '../components/CustomMetrics'
 import UsersAdmin from '../components/UsersAdmin'
 import ViewsBar from '../components/ViewsBar'
+import PipelineIA from '../components/PipelineIA'
 import { useAuth } from '../context/AuthContext'
 
 const emptyFilters = () => Object.fromEntries(FILTER_COLUMNS.map((c) => [c.key, new Set()]))
@@ -49,6 +50,7 @@ export default function InfoTrackDashboard() {
   const [filters, setFilters] = useState(emptyFilters)
   const [search, setSearch] = useState('')
   const [tab, setTab] = useState('tabla')
+  const [pipeline, setPipeline] = useState('comercial') // 'comercial' | 'ia'
   // Rangos de fecha editables (ISO YYYY-MM-DD; '' = sin límite)
   const emptyDates = { fechaCreacion: { from: '', to: '' }, fechaCierre: { from: '', to: '' } }
   const [dateFilters, setDateFilters] = useState(emptyDates)
@@ -95,16 +97,28 @@ export default function InfoTrackDashboard() {
         <div className="dashboard__brand">
           <img className="dashboard__logo" src="/logo-infotrack.png" alt="InfoTrack" />
         </div>
+        <div className="pipelineswitch">
+          <button className={'pipelineswitch__btn' + (pipeline === 'comercial' ? ' pipelineswitch__btn--active' : '')} onClick={() => setPipeline('comercial')}>
+            Pipeline Comercial
+          </button>
+          <button className={'pipelineswitch__btn' + (pipeline === 'ia' ? ' pipelineswitch__btn--active' : '')} onClick={() => setPipeline('ia')}>
+            Pipeline IA
+          </button>
+        </div>
         <div className="dashboard__actions">
-          <span className="dashboard__badge">
-            {loading ? 'cargando…' : `${filtered.length} / ${allRows.length} oportunidades`}
-          </span>
-          <div className="dashboard__refreshcol">
-            <button className="dashboard__refresh" onClick={fetchData} disabled={refreshing} title="Actualizar ahora">
-              {refreshing ? '↻ …' : '↻ Actualizar'}
-            </button>
-            <span className="dashboard__live">auto cada 30s</span>
-          </div>
+          {pipeline === 'comercial' && (
+            <>
+              <span className="dashboard__badge">
+                {loading ? 'cargando…' : `${filtered.length} / ${allRows.length} oportunidades`}
+              </span>
+              <div className="dashboard__refreshcol">
+                <button className="dashboard__refresh" onClick={fetchData} disabled={refreshing} title="Actualizar ahora">
+                  {refreshing ? '↻ …' : '↻ Actualizar'}
+                </button>
+                <span className="dashboard__live">auto cada 30s</span>
+              </div>
+            </>
+          )}
           {authEnabled && user && (
             <div className="dashboard__user">
               <span className="dashboard__useremail" title={user.email}>{user.name || user.email}</span>
@@ -114,42 +128,48 @@ export default function InfoTrackDashboard() {
         </div>
       </header>
 
-      <KpiBar rows={filtered} />
+      {pipeline === 'ia' ? (
+        <PipelineIA />
+      ) : (
+        <>
+          <KpiBar rows={filtered} />
 
-      <ViewsBar getState={getViewState} applyState={applyViewState} />
+          <ViewsBar getState={getViewState} applyState={applyViewState} />
 
-      <FilterBar
-        rows={allRows}
-        filters={filters}
-        setFilters={setFilters}
-        search={search}
-        setSearch={setSearch}
-        dateFilters={dateFilters}
-        setDateFilters={setDateFilters}
-        onReset={() => { setFilters(emptyFilters()); setSearch(''); setDateFilters(emptyDates) }}
-      />
+          <FilterBar
+            rows={allRows}
+            filters={filters}
+            setFilters={setFilters}
+            search={search}
+            setSearch={setSearch}
+            dateFilters={dateFilters}
+            setDateFilters={setDateFilters}
+            onReset={() => { setFilters(emptyFilters()); setSearch(''); setDateFilters(emptyDates) }}
+          />
 
-      <nav className="tabs">
-        <button className={'tab' + (tab === 'tabla' ? ' tab--active' : '')} onClick={() => setTab('tabla')}>
-          Tabla
-        </button>
-        <button className={'tab' + (tab === 'graficos' ? ' tab--active' : '')} onClick={() => setTab('graficos')}>
-          Gráficos
-        </button>
-        <button className={'tab' + (tab === 'metricas' ? ' tab--active' : '')} onClick={() => setTab('metricas')}>
-          Mis Métricas
-        </button>
-        {user?.role === 'admin' && (
-          <button className={'tab' + (tab === 'usuarios' ? ' tab--active' : '')} onClick={() => setTab('usuarios')}>
-            Usuarios
-          </button>
-        )}
-      </nav>
+          <nav className="tabs">
+            <button className={'tab' + (tab === 'tabla' ? ' tab--active' : '')} onClick={() => setTab('tabla')}>
+              Tabla
+            </button>
+            <button className={'tab' + (tab === 'graficos' ? ' tab--active' : '')} onClick={() => setTab('graficos')}>
+              Gráficos
+            </button>
+            <button className={'tab' + (tab === 'metricas' ? ' tab--active' : '')} onClick={() => setTab('metricas')}>
+              Mis Métricas
+            </button>
+            {user?.role === 'admin' && (
+              <button className={'tab' + (tab === 'usuarios' ? ' tab--active' : '')} onClick={() => setTab('usuarios')}>
+                Usuarios
+              </button>
+            )}
+          </nav>
 
-      {tab === 'tabla' && <PipelineTable rows={filtered} />}
-      {tab === 'graficos' && <Charts rows={filtered} />}
-      {tab === 'metricas' && <CustomMetrics rows={allRows} />}
-      {tab === 'usuarios' && user?.role === 'admin' && <UsersAdmin />}
+          {tab === 'tabla' && <PipelineTable rows={filtered} />}
+          {tab === 'graficos' && <Charts rows={filtered} />}
+          {tab === 'metricas' && <CustomMetrics rows={allRows} />}
+          {tab === 'usuarios' && user?.role === 'admin' && <UsersAdmin />}
+        </>
+      )}
     </div>
   )
 }

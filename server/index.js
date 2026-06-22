@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { getCustomFields, getPipelines, searchOpportunities, getUsers } from './ghl.js'
 import { mapAll, FIELD_MAP } from './mapping.js'
+import { mapAllIA } from './mappingIA.js'
 import { initDb, AUTH_ENABLED } from './db.js'
 import { mountAuthRoutes, requireAuth, requireAdmin } from './auth.js'
 import { mountMetricsRoutes } from './metrics.js'
@@ -19,6 +20,7 @@ app.use(express.json())
 const PORT = process.env.PORT || 3001
 const LOCATION = process.env.GHL_LOCATION_ID
 const PIPELINE = process.env.GHL_PIPELINE_ID || null
+const PIPELINE_IA = process.env.GHL_PIPELINE_IA || 'naloY0M2RJ60YgZGg0aI' // pipeline Llamadas IA
 const REFRESH_MS = Number(process.env.REFRESH_MS || 30 * 1000) // 30 s
 
 const configured = () => Boolean(process.env.GHL_TOKEN && LOCATION)
@@ -29,6 +31,7 @@ const SEED_PATH = join(__dirname, '../src/data/pipeline.json')
 const seed = existsSync(SEED_PATH) ? JSON.parse(readFileSync(SEED_PATH, 'utf8')) : []
 
 let cache = { rows: seed, source: 'seed', updatedAt: null, error: null }
+let cacheIA = { rows: [], source: 'seed', updatedAt: null, error: null }
 
 async function refresh() {
   if (!configured()) {
@@ -36,18 +39,20 @@ async function refresh() {
     return cache
   }
   try {
-    const [fields, pipelines, users, opps] = await Promise.all([
+    const [fields, pipelines, users, opps, oppsIA] = await Promise.all([
       getCustomFields(LOCATION, 'opportunity'),
       getPipelines(LOCATION),
       getUsers(LOCATION),
       searchOpportunities(LOCATION, PIPELINE),
+      searchOpportunities(LOCATION, PIPELINE_IA),
     ])
     const keyById = Object.fromEntries(fields.map((f) => [f.id, f.fieldKey]))
     const stageById = {}
     for (const p of pipelines) for (const s of p.stages || []) stageById[s.id] = s.name
     const userById = Object.fromEntries(users.map((u) => [u.id, u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim()]))
-    const rows = mapAll(opps, { keyById, stageById, userById })
-    cache = { rows, source: 'ghl', updatedAt: new Date().toISOString(), error: null }
+    const now = new Date().toISOString()
+    cache = { rows: mapAll(opps, { keyById, stageById, userById }), source: 'ghl', updatedAt: now, error: null }
+    cacheIA = { rows: mapAllIA(oppsIA, { stageById, userById }), source: 'ghl', updatedAt: now, error: null }
   } catch (e) {
     cache = { ...cache, source: 'ghl-error', error: String(e.message || e), updatedAt: new Date().toISOString() }
   }
@@ -78,6 +83,11 @@ function rowsForUser(user) {
 // Filas crudas del pipeline (protegido y filtrado por usuario cuando AUTH está activo).
 app.get('/api/pipeline', requireAuth, (req, res) =>
   res.json({ rows: rowsForUser(req.user), source: cache.source, updatedAt: cache.updatedAt, error: cache.error })
+)
+
+// Pipeline IA (Llamadas IA) — visible para todos los usuarios autenticados.
+app.get('/api/pipeline-ia', requireAuth, (_req, res) =>
+  res.json({ rows: cacheIA.rows, source: cacheIA.source, updatedAt: cacheIA.updatedAt, error: cacheIA.error })
 )
 
 // Lista de comerciales (para asignar a usuarios). Solo admin.
