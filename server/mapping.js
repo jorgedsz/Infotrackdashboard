@@ -40,7 +40,7 @@ const toISO = (v) => {
 }
 
 // status de GHL -> Estado del Excel
-const ESTADO = { open: 'Abierto', won: 'Ganada', lost: 'Perdida', abandoned: 'Perdida' }
+const ESTADO = { open: 'Abierto', won: 'Ganada', lost: 'Perdida', abandoned: 'Abandonada' }
 
 // Extrae el valor tipado de un custom field de oportunidad.
 const cfValue = (cf) =>
