@@ -490,6 +490,16 @@ h1, h2, h3 { font-family: var(--font-head); }
 .cmcard__actions { display: flex; gap: 4px; }
 .cmcard__actions button { border: none; background: #f1f5f9; border-radius: 6px; padding: 4px 8px; cursor: pointer; }
 .cmcard__metric { font-size: 12px; color: var(--brand-gray); text-transform: uppercase; letter-spacing: .03em; font-weight: 700; }
+.cmcard__dataset {
+  margin-left: 6px;
+  background: #e6f0ff;
+  color: var(--brand-blue);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 10px;
+  text-transform: none;
+  letter-spacing: 0;
+}
 .cmcard__value { font-family: var(--font-head); font-size: 22px; font-weight: 700; color: var(--brand-navy); }
 .cmcard__count { font-size: 12px; color: var(--brand-gray); }
 .cmcard__goal { margin-top: 6px; }
@@ -623,6 +633,7 @@ body {
 .cmcard__actions button { background: var(--surface-2); }
 .cmbar { background: rgba(255,255,255,0.1); }
 .cmchip { background: var(--surface-2); color: var(--text-d); }
+.cmcard__dataset { background: rgba(0,104,255,0.22); color: #9fc6ff; }
 
 /* ---------- Login / Auth ---------- */
 .bootscreen {

@@ -4,9 +4,10 @@ import cors from 'cors'
 import { readFileSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { getCustomFields, getPipelines, searchOpportunities, getUsers } from './ghl.js'
+import { getCustomFields, getPipelines, searchOpportunities, getUsers, getCalendars, getContactAppointments } from './ghl.js'
 import { mapAll, FIELD_MAP } from './mapping.js'
 import { mapAllIA } from './mappingIA.js'
+import { mapAllCitas } from './mappingCitas.js'
 import { initDb, AUTH_ENABLED } from './db.js'
 import { mountAuthRoutes, requireAuth, requireAdmin } from './auth.js'
 import { mountMetricsRoutes } from './metrics.js'
@@ -32,6 +33,43 @@ const seed = existsSync(SEED_PATH) ? JSON.parse(readFileSync(SEED_PATH, 'utf8'))
 
 let cache = { rows: seed, source: 'seed', updatedAt: null, error: null }
 let cacheIA = { rows: [], source: 'seed', updatedAt: null, error: null }
+let cacheCitas = { rows: [], source: 'seed', updatedAt: null, error: null }
+
+// Etapas cuyo nombre indica que hay una cita agendada (hoy: "Cita Agendada").
+const ES_ETAPA_CITA = /cita/i
+// Tope de contactos a consultar por refresh: cada uno es una llamada extra a GHL.
+const MAX_CONTACTOS_CITA = 300
+
+// Ejecuta las promesas de a `limite` en paralelo; los fallos individuales no
+// tumban el lote (esa cita simplemente queda sin traer).
+async function enLotes(items, limite, fn) {
+  const out = []
+  for (let i = 0; i < items.length; i += limite) {
+    const lote = items.slice(i, i + limite)
+    const res = await Promise.all(lote.map((it) => fn(it).catch(() => null)))
+    out.push(...res)
+  }
+  return out
+}
+
+// Trae las citas de las oportunidades que están en etapa de cita agendada.
+// Una oportunidad puede compartir contacto con otra: deduplicamos por contacto
+// para no contar la misma cita dos veces.
+async function traerCitas(oppsIA, ctx) {
+  const enCita = oppsIA.filter((o) => ES_ETAPA_CITA.test(ctx.stageById?.[o.pipelineStageId] || ''))
+  const porContacto = new Map()
+  for (const o of enCita) {
+    const cid = o.contactId || o.contact?.id
+    if (cid && !porContacto.has(cid)) porContacto.set(cid, o)
+  }
+  let pares = [...porContacto.entries()]
+  if (pares.length > MAX_CONTACTOS_CITA) {
+    console.warn(`[infotrack] ${pares.length} contactos en etapa de cita; consultando solo los primeros ${MAX_CONTACTOS_CITA}`)
+    pares = pares.slice(0, MAX_CONTACTOS_CITA)
+  }
+  const res = await enLotes(pares, 5, async ([cid, opp]) => ({ opp, citas: await getContactAppointments(cid) }))
+  return mapAllCitas(res.filter(Boolean), ctx)
+}
 
 async function refresh() {
   if (!configured()) {
@@ -39,10 +77,11 @@ async function refresh() {
     return cache
   }
   try {
-    const [fields, pipelines, users, opps, oppsIA] = await Promise.all([
+    const [fields, pipelines, users, calendars, opps, oppsIA] = await Promise.all([
       getCustomFields(LOCATION, 'opportunity'),
       getPipelines(LOCATION),
       getUsers(LOCATION),
+      getCalendars(LOCATION).catch(() => []), // sin calendarios seguimos: solo perdemos el nombre
       searchOpportunities(LOCATION, PIPELINE),
       searchOpportunities(LOCATION, PIPELINE_IA),
     ])
@@ -50,9 +89,20 @@ async function refresh() {
     const stageById = {}
     for (const p of pipelines) for (const s of p.stages || []) stageById[s.id] = s.name
     const userById = Object.fromEntries(users.map((u) => [u.id, u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim()]))
+    const calendarById = Object.fromEntries(calendars.map((c) => [c.id, c.name]))
     const now = new Date().toISOString()
     cache = { rows: mapAll(opps, { keyById, stageById, userById }), source: 'ghl', updatedAt: now, error: null }
     cacheIA = { rows: mapAllIA(oppsIA, { stageById, userById }), source: 'ghl', updatedAt: now, error: null }
+    // Las citas dependen de una llamada por contacto: si fallan, el resto del
+    // refresh igual queda servido y se conserva el último set bueno.
+    try {
+      cacheCitas = {
+        rows: await traerCitas(oppsIA, { stageById, userById, calendarById }),
+        source: 'ghl', updatedAt: now, error: null,
+      }
+    } catch (e) {
+      cacheCitas = { ...cacheCitas, source: 'ghl-error', error: String(e.message || e), updatedAt: now }
+    }
   } catch (e) {
     cache = { ...cache, source: 'ghl-error', error: String(e.message || e), updatedAt: new Date().toISOString() }
   }
@@ -66,7 +116,7 @@ mountViewsRoutes(app)
 
 // --- Endpoints ---
 app.get('/api/health', (_req, res) =>
-  res.json({ ok: true, configured: configured(), authEnabled: AUTH_ENABLED, source: cache.source, updatedAt: cache.updatedAt, rows: cache.rows.length, error: cache.error })
+  res.json({ ok: true, configured: configured(), authEnabled: AUTH_ENABLED, source: cache.source, updatedAt: cache.updatedAt, rows: cache.rows.length, rowsIA: cacheIA.rows.length, citas: cacheCitas.rows.length, error: cache.error })
 )
 
 // Restringe las filas según el usuario: admin o "ver todo" => todo;
@@ -88,6 +138,11 @@ app.get('/api/pipeline', requireAuth, (req, res) =>
 // Pipeline IA (Llamadas IA) — visible para todos los usuarios autenticados.
 app.get('/api/pipeline-ia', requireAuth, (_req, res) =>
   res.json({ rows: cacheIA.rows, source: cacheIA.source, updatedAt: cacheIA.updatedAt, error: cacheIA.error })
+)
+
+// Citas de las oportunidades en etapa "Cita Agendada" (una fila por cita).
+app.get('/api/citas', requireAuth, (_req, res) =>
+  res.json({ rows: cacheCitas.rows, source: cacheCitas.source, updatedAt: cacheCitas.updatedAt, error: cacheCitas.error })
 )
 
 // Lista de comerciales (para asignar a usuarios). Solo admin.

@@ -13,10 +13,10 @@ function authHeaders() {
   }
 }
 
-async function ghlGet(path, params = {}) {
+async function ghlGet(path, params = {}, version = VERSION) {
   const url = new URL(BASE + path)
   for (const [k, v] of Object.entries(params)) if (v != null) url.searchParams.set(k, v)
-  const res = await fetch(url, { headers: authHeaders() })
+  const res = await fetch(url, { headers: { ...authHeaders(), Version: version } })
   if (!res.ok) {
     const body = await res.text().catch(() => '')
     throw new Error(`GHL ${res.status} ${path}: ${body.slice(0, 300)}`)
@@ -41,6 +41,18 @@ export async function getUsers(locationId) {
 export async function getPipelines(locationId) {
   const data = await ghlGet('/opportunities/pipelines', { locationId })
   return data.pipelines || []
+}
+
+// Calendarios de la location: para resolver calendarId -> nombre del calendario.
+export async function getCalendars(locationId) {
+  const data = await ghlGet('/calendars/', { locationId })
+  return data.calendars || []
+}
+
+// Citas de un contacto. Este endpoint solo responde con la Version 2021-04-15.
+export async function getContactAppointments(contactId) {
+  const data = await ghlGet(`/contacts/${contactId}/appointments`, {}, '2021-04-15')
+  return data.events || data.appointments || []
 }
 
 // Trae TODAS las oportunidades de una location (paginando), opcionalmente de un pipeline.

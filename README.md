@@ -53,6 +53,12 @@ npm start       # Express sirve dist/ + la API
 - La data real **no** se versiona: el seed `src/data/pipeline.json` está en `.gitignore`.
   Todo se obtiene en vivo de GoHighLevel.
 - Endpoints de descubrimiento: `/api/ghl/pipelines`, `/api/ghl/custom-fields`, `/api/ghl/mapping-check`.
+- **Citas**: las oportunidades del pipeline IA que están en la etapa *Cita Agendada* se cruzan
+  contra `GET /contacts/{id}/appointments` (esa ruta solo responde con `Version: 2021-04-15`) y
+  se sirven en `/api/citas` con **una fila por cita**. Están en *Pipeline IA → Citas* y como
+  dataset de *Mis Métricas*. Se consulta un contacto por request, con tope de 300 por refresh.
+- **Mis Métricas** trabaja sobre tres datasets: *Pipeline Comercial*, *Pipeline IA* y *Citas*.
+  Las métricas guardadas antes de esto no traen `dataset` y se siguen evaluando como comerciales.
 - **Fuente** es el campo nativo `source` de la oportunidad (texto libre en GHL: hoy trae ~300
   valores distintos, muchos duplicados por tipeo). **Seguimiento** es el custom field
   `opportunity.seguimiento` (8 etapas de follow-up). Ambos son filtrables y sirven como
