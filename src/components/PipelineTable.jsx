@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
-import { COLUMNS, renderCell } from '../lib/columns'
+import { buildColumns, renderCell } from '../lib/columns'
+import { DEFAULT_BILLING_YEAR } from '../lib/calc'
 import { exportCSV, exportXLSX, exportPDF } from '../lib/export'
 
 const PAGE_SIZES = [25, 50, 100, 'Todas']
 
-export default function PipelineTable({ rows }) {
+export default function PipelineTable({ rows, year = DEFAULT_BILLING_YEAR }) {
   const [sort, setSort] = useState({ key: 'bookingTotal', dir: 'desc' })
   const [showMonthly, setShowMonthly] = useState(true)
   const [pageSize, setPageSize] = useState(50)
   const [page, setPage] = useState(1)
 
   const cols = useMemo(
-    () => COLUMNS.filter((c) => showMonthly || !c.monthly),
-    [showMonthly]
+    () => buildColumns(year).filter((c) => showMonthly || !c.monthly),
+    [showMonthly, year]
   )
 
   const sorted = useMemo(() => {
@@ -57,7 +58,7 @@ export default function PipelineTable({ rows }) {
       <div className="tablebar">
         <label className="tabletoggle">
           <input type="checkbox" checked={showMonthly} onChange={(e) => setShowMonthly(e.target.checked)} />
-          Ver desglose mensual (Facturación y MB · Ene–Dic)
+          Ver desglose mensual (Facturación y MB · Ene–Dic {year})
         </label>
         <div className="tablebar__right">
           <div className="exportbar">

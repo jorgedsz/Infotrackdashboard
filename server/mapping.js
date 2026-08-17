@@ -23,6 +23,7 @@ export const FIELD_MAP = {
   recurrente: 'opportunity.recurrente_smartsuite',
   tiempoContrato: 'opportunity.tiempo_de_contrato',
   fuenteLead: 'opportunity.fuente_de_lead',
+  seguimiento: 'opportunity.seguimiento',
   margenMix: 'opportunity.margen_mix',
   areaNegocio: 'opportunity.area_de_negocio',
   codigoOp: 'opportunity.codigo_de_oportunidad',
@@ -80,7 +81,7 @@ export function mapOpportunity(opp, ctx) {
   // Resto de columnas desde custom fields
   for (const col of ['sumhw', 'hwaas', 'svcs', 'swter', 'swss', 'proyecto', 'productos',
     'lineaNegocio', 'aliado', 'kare', 'probabilidadCierre', 'fechaInicioFact', 'fechaCierre',
-    'recurrente', 'tiempoContrato', 'fuenteLead', 'margenMix', 'areaNegocio']) {
+    'recurrente', 'tiempoContrato', 'fuenteLead', 'seguimiento', 'margenMix', 'areaNegocio']) {
     let v = pick(col)
     if (numericKeys.has(col)) v = toNum(v)
     else if (dateKeys.has(col)) v = toISO(v)

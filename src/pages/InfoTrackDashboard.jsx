@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { enrichAll } from '../lib/calc'
+import { enrichAll, aniosDeFacturacion, DEFAULT_BILLING_YEAR } from '../lib/calc'
 import { FILTER_COLUMNS } from '../lib/columns'
 import { loadPipeline } from '../services/pipelineApi'
 import FilterBar from '../components/FilterBar'
@@ -13,6 +13,16 @@ import PipelineIA from '../components/PipelineIA'
 import { useAuth } from '../context/AuthContext'
 
 const emptyFilters = () => Object.fromEntries(FILTER_COLUMNS.map((c) => [c.key, new Set()]))
+
+// Año de facturación elegido (persiste en el navegador entre sesiones)
+const YEAR_KEY = 'infotrack.billingYear.v1'
+const initialYear = () => {
+  try {
+    const saved = Number(localStorage.getItem(YEAR_KEY))
+    if (Number.isInteger(saved) && saved > 2000 && saved < 2100) return saved
+  } catch { /* sin persistencia */ }
+  return DEFAULT_BILLING_YEAR
+}
 
 const SOURCE_LABEL = {
   ghl: 'GoHighLevel (en vivo)',
@@ -44,8 +54,21 @@ export default function InfoTrackDashboard() {
     return () => clearInterval(id)
   }, [fetchData])
 
+  // Año sobre el que se reparte la facturación mensual (Ene–Dic)
+  const [billingYear, setBillingYear] = useState(initialYear)
+  useEffect(() => {
+    try { localStorage.setItem(YEAR_KEY, String(billingYear)) } catch { /* sin persistencia */ }
+  }, [billingYear])
+
+  // Años ofrecidos: los que cubre la data + el actual + el elegido (aunque la data no lo cubra)
+  const yearOptions = useMemo(() => {
+    const anios = new Set(aniosDeFacturacion(rawRows))
+    anios.add(billingYear)
+    return [...anios].sort((a, b) => a - b)
+  }, [rawRows, billingYear])
+
   // Enriquecemos: aplica todas las fórmulas a las oportunidades
-  const allRows = useMemo(() => enrichAll(rawRows), [rawRows])
+  const allRows = useMemo(() => enrichAll(rawRows, billingYear), [rawRows, billingYear])
 
   const [filters, setFilters] = useState(emptyFilters)
   const [search, setSearch] = useState('')
@@ -81,6 +104,7 @@ export default function InfoTrackDashboard() {
     search,
     dateFilters,
     tab,
+    billingYear,
   })
   const applyViewState = (st = {}) => {
     const f = emptyFilters()
@@ -89,6 +113,7 @@ export default function InfoTrackDashboard() {
     setSearch(st.search || '')
     setDateFilters(st.dateFilters || emptyDates)
     if (st.tab) setTab(st.tab)
+    if (st.billingYear) setBillingYear(st.billingYear) // vistas viejas no lo traen
   }
 
   return (
@@ -108,6 +133,17 @@ export default function InfoTrackDashboard() {
         <div className="dashboard__actions">
           {pipeline === 'comercial' && (
             <>
+              <label className="yearpick">
+                <span className="yearpick__label">Año fact.</span>
+                <select
+                  className="yearpick__select"
+                  value={billingYear}
+                  onChange={(e) => setBillingYear(Number(e.target.value))}
+                  title="Año sobre el que se reparte la facturación mensual y el MB"
+                >
+                  {yearOptions.map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </label>
               <span className="dashboard__badge">
                 {loading ? 'cargando…' : `${filtered.length} / ${allRows.length} oportunidades`}
               </span>
@@ -164,8 +200,8 @@ export default function InfoTrackDashboard() {
             )}
           </nav>
 
-          {tab === 'tabla' && <PipelineTable rows={filtered} />}
-          {tab === 'graficos' && <Charts rows={filtered} />}
+          {tab === 'tabla' && <PipelineTable rows={filtered} year={billingYear} />}
+          {tab === 'graficos' && <Charts rows={filtered} year={billingYear} />}
           {tab === 'metricas' && <CustomMetrics rows={allRows} />}
           {tab === 'usuarios' && user?.role === 'admin' && <UsersAdmin />}
         </>

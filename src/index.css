@@ -56,6 +56,20 @@ h1, h2, h3 { font-family: var(--font-head); }
 }
 .dashboard__refresh:disabled { opacity: .6; cursor: default; }
 .dashboard__live { color: var(--brand-cyan); font-weight: 700; }
+/* Selector de año de facturación */
+.yearpick { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+.yearpick__label { color: var(--brand-gray); font-weight: 700; }
+.yearpick__select {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-body);
+  color: var(--brand-navy);
+  cursor: pointer;
+}
 
 /* ---------- KPIs (resúmenes) ---------- */
 .kpis {
@@ -255,6 +269,19 @@ h1, h2, h3 { font-family: var(--font-head); }
   box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
   padding: 8px;
 }
+.ms__search {
+  width: 100%;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-family: var(--font-body);
+  color: var(--brand-gray-dark);
+}
+.ms__search:focus { outline: none; border-color: var(--brand-blue); }
+.ms__empty { padding: 10px 6px; font-size: 12px; color: var(--brand-gray); text-align: center; }
 .ms__actions { display: flex; gap: 6px; margin-bottom: 6px; }
 .ms__actions button {
   flex: 1;
@@ -507,6 +534,9 @@ body {
 .dashboard__subtitle { color: var(--text-muted); }
 .dashboard__badge { background: rgba(0,104,255,0.18); color: #79b4ff; }
 .dashboard__live { color: var(--brand-cyan); }
+.yearpick__label { color: var(--text-muted); }
+.yearpick__select { background: var(--surface-2); border-color: var(--border-d); color: var(--text-d); }
+.yearpick__select option { background: #0a2748; color: var(--text-d); }
 
 /* KPIs */
 .kpi {
@@ -555,6 +585,9 @@ body {
 .ms__opt:hover { background: rgba(255,255,255,0.06); }
 .ms__actions button { background: var(--surface-2); color: var(--text-muted); }
 .ms__caret { color: var(--text-muted); }
+.ms__search { background: var(--surface-2); border-color: var(--border-d); color: var(--text-d); }
+.ms__search::placeholder { color: var(--text-muted); }
+.ms__empty { color: var(--text-muted); }
 
 /* Tabla */
 .tablebar, .tabletoggle { color: var(--text-muted); }

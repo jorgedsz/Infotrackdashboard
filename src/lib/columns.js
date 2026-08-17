@@ -2,20 +2,21 @@
 // type: 'text' | 'money' | 'date' | 'pct' | 'num'
 // filter: 'category' (dropdown de valores únicos) | 'search' (texto) | null
 import { fmtMoney, fmtNum, fmtPct, fmtDate } from './format'
+import { MESES, DEFAULT_BILLING_YEAR } from './calc'
 
-const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
-// Genera las 12 columnas mensuales para un prefijo dado (fac / mb)
-const mesesCols = (prefix, labelPrefix) =>
+// Genera las 12 columnas mensuales para un prefijo dado (fac / mb), etiquetadas con el año
+const mesesCols = (prefix, labelPrefix, year) =>
   MESES.map((m) => ({
     key: prefix + m,
-    label: `${labelPrefix} ${m}`,
+    label: `${labelPrefix} ${m} ${year}`,
     type: 'money',
     filter: null,
     calc: true,
     monthly: true,
   }))
 
-export const COLUMNS = [
+// Las columnas dependen del año de facturación elegido (solo en las mensuales).
+export const buildColumns = (year = DEFAULT_BILLING_YEAR) => [
   { key: 'pais', label: 'País', type: 'text', filter: 'category' },
   { key: 'comercial', label: 'Comercial', type: 'text', filter: 'category' },
   { key: 'oportunidad', label: '# Oport.', type: 'text', filter: 'search' },
@@ -34,6 +35,10 @@ export const COLUMNS = [
   { key: 'probabilidadCierre', label: 'Prob. Cierre', type: 'text', filter: 'category' },
   { key: 'tiempoContrato', label: 'Contrato', type: 'text', filter: 'category' },
   { key: 'fuenteLead', label: 'Fuente de Lead', type: 'text', filter: 'category' },
+  // `fuente` es el campo nativo `source` de GHL (texto libre); `seguimiento` es el
+  // custom field de etapa de follow-up. Ambos filtrables => condicionan Mis Métricas.
+  { key: 'fuente', label: 'Fuente', type: 'text', filter: 'category' },
+  { key: 'seguimiento', label: 'Seguimiento', type: 'text', filter: 'category' },
   { key: 'margenMix', label: 'Margen Mix', type: 'pctraw', filter: null },
   { key: 'areaNegocio', label: 'Área de Negocio', type: 'text', filter: 'category' },
   // --- columnas calculadas ---
@@ -44,15 +49,17 @@ export const COLUMNS = [
   { key: 'probabilidad', label: 'Prob.', type: 'pct', filter: null, calc: true },
   { key: 'totalMCB', label: 'Total MCB', type: 'money', filter: null, calc: true },
   { key: 'totalFacturacion', label: 'Total Facturación', type: 'money', filter: null, calc: true },
-  ...mesesCols('fac', 'Fact.'),
+  ...mesesCols('fac', 'Fact.', year),
   { key: 'totalMB', label: 'Total MB', type: 'money', filter: null, calc: true },
-  ...mesesCols('mb', 'MB'),
+  ...mesesCols('mb', 'MB', year),
   { key: 'sensibilizado', label: 'Pipeline Sensibilizado', type: 'money', filter: null, calc: true },
   // --- fechas al final ---
   { key: 'fechaCreacion', label: 'F. Creación', type: 'date', filter: null },
   { key: 'fechaCierre', label: 'F. Cierre', type: 'date', filter: null },
 ]
 
+export const COLUMNS = buildColumns()
+// Las columnas filtrables son todas categóricas (ninguna mensual), así que no dependen del año.
 export const FILTER_COLUMNS = COLUMNS.filter((c) => c.filter === 'category')
 
 export function renderCell(col, row) {

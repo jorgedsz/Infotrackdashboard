@@ -53,5 +53,13 @@ npm start       # Express sirve dist/ + la API
 - La data real **no** se versiona: el seed `src/data/pipeline.json` está en `.gitignore`.
   Todo se obtiene en vivo de GoHighLevel.
 - Endpoints de descubrimiento: `/api/ghl/pipelines`, `/api/ghl/custom-fields`, `/api/ghl/mapping-check`.
+- **Fuente** es el campo nativo `source` de la oportunidad (texto libre en GHL: hoy trae ~300
+  valores distintos, muchos duplicados por tipeo). **Seguimiento** es el custom field
+  `opportunity.seguimiento` (8 etapas de follow-up). Ambos son filtrables y sirven como
+  condición en *Mis Métricas*; para agrupar bien por Fuente hay que normalizarla en el CRM.
 - El motor de cálculo (`src/lib/calc.js`) replica las fórmulas del Excel: MCB, facturación
   mensual, MB, probabilidad, pipeline sensibilizado, etc.
+- **Año de facturación**: el desglose mensual (Ene–Dic) y el MB se calculan sobre el año que
+  se elija en el selector *"Año fact."* del encabezado. Por defecto es el año en curso y la
+  elección queda guardada en el navegador; las opciones salen de los años que cubre la data
+  (fecha de inicio de facturación + tiempo de contrato). El Excel original lo tenía fijo en 2026.

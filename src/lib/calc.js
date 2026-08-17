@@ -4,8 +4,9 @@
 
 import lookups from '../data/lookups.json'
 
-// Mes objetivo del modelo de facturación (el Excel reparte sobre el año 2026)
-export const BILLING_YEAR = 2026
+// Año objetivo del modelo de facturación: el Excel repartía sobre 12 meses de un
+// año fijo (2026). Acá el año es un parámetro; si no se pasa, se usa el año en curso.
+export const DEFAULT_BILLING_YEAR = new Date().getFullYear()
 export const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
 
 // % de Margen de Contribución Bruto (MCB) por línea de producto
@@ -63,26 +64,53 @@ function lineaDominante(mcb) {
 // --- Facturación mes a mes (AE..AP) ---
 // Venta transaccional: el monto recurrente cae completo en el mes de inicio.
 // Recurrente "X Meses": el monto se factura cada mes desde el inicio hasta inicio+X-1.
-export function calcFacturacionMensual(row) {
+export function calcFacturacionMensual(row, year = DEFAULT_BILLING_YEAR) {
   const fact = new Array(12).fill(0)
   const inicio = toDate(row.fechaInicioFact)
   const monto = row.recurrente || 0
   if (!inicio || !monto) return fact
 
   if (esTransaccional(row.tiempoContrato)) {
-    if (inicio.getFullYear() === BILLING_YEAR) fact[inicio.getMonth()] = monto
+    if (inicio.getFullYear() === year) fact[inicio.getMonth()] = monto
     return fact
   }
   const meses = monthsFromContrato(row.tiempoContrato)
   if (!meses) return fact
-  // Rango [inicio, inicio+meses-1]; marcamos los meses de BILLING_YEAR que caen dentro
+  // Rango [inicio, inicio+meses-1]; marcamos los meses del año elegido que caen dentro
   const start = new Date(inicio.getFullYear(), inicio.getMonth(), 1)
   const end = new Date(inicio.getFullYear(), inicio.getMonth() + meses - 1, 1)
   for (let m = 0; m < 12; m++) {
-    const cur = new Date(BILLING_YEAR, m, 1)
+    const cur = new Date(year, m, 1)
     if (cur >= start && cur <= end) fact[m] = monto
   }
   return fact
+}
+
+// Rango [desdeAño, hastaAño] que cubre la facturación de una fila (null si no factura).
+function spanDeFacturacion(row) {
+  const inicio = toDate(row.fechaInicioFact)
+  if (!inicio || !(row.recurrente || 0)) return null
+  const desde = inicio.getFullYear()
+  if (esTransaccional(row.tiempoContrato)) return [desde, desde]
+  const meses = monthsFromContrato(row.tiempoContrato)
+  if (!meses) return null
+  const fin = new Date(desde, inicio.getMonth() + meses - 1, 1)
+  return [desde, fin.getFullYear()]
+}
+
+// Años que tiene sentido ofrecer en el selector: los que cubre la data (acotados a
+// una ventana razonable, por si hay fechas erróneas en el CRM) más el año en curso.
+export function aniosDeFacturacion(
+  rows,
+  { min = DEFAULT_BILLING_YEAR - 5, max = DEFAULT_BILLING_YEAR + 10 } = {}
+) {
+  const anios = new Set([DEFAULT_BILLING_YEAR])
+  for (const row of rows) {
+    const span = spanDeFacturacion(row)
+    if (!span) continue
+    for (let y = Math.max(span[0], min); y <= Math.min(span[1], max); y++) anios.add(y)
+  }
+  return [...anios].sort((a, b) => a - b)
 }
 
 // --- MB mes a mes (AR..BC) = facturación del mes * % según línea dominante ---
@@ -93,9 +121,9 @@ export function calcMBMensual(facturacion, mcb) {
 }
 
 // --- Fila enriquecida con todas las columnas calculadas ---
-export function enrich(row) {
+export function enrich(row, year = DEFAULT_BILLING_YEAR) {
   const mcb = calcMCB(row)
-  const facturacion = calcFacturacionMensual(row)
+  const facturacion = calcFacturacionMensual(row, year)
   const mb = calcMBMensual(facturacion, mcb)
   const probabilidad = probabilidadNum(row.probabilidadCierre)
   const totalFacturacion = facturacion.reduce((a, b) => a + b, 0)
@@ -108,6 +136,7 @@ export function enrich(row) {
   })
   return {
     ...row,
+    billingYear: year,
     mcb,
     totalMCB: mcb.total,
     facturacion,
@@ -125,6 +154,7 @@ export function enrich(row) {
   }
 }
 
-export function enrichAll(rows) {
-  return rows.map(enrich)
+export function enrichAll(rows, year = DEFAULT_BILLING_YEAR) {
+  // Ojo: arrow function a propósito — `rows.map(enrich)` pasaría el índice como año.
+  return rows.map((row) => enrich(row, year))
 }

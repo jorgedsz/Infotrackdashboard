@@ -4,6 +4,7 @@ import {
   PieChart, Pie, Cell, AreaChart, Area,
 } from 'recharts'
 import { sumBy, seriesMensual, mcbPorProducto, bookingPorLinea, stackPorProducto, LINEA_LABELS } from '../lib/aggregate'
+import { DEFAULT_BILLING_YEAR } from '../lib/calc'
 import { fmtCompact, fmtMoney, fmtNum } from '../lib/format'
 
 // Paleta basada en la marca InfoTrack (azules + grises + tintes derivados)
@@ -38,6 +39,9 @@ const DIMENSIONS = [
   { key: 'probabilidadCierre', label: 'Probabilidad de Cierre', layout: 'vertical' },
   { key: 'tiempoContrato', label: 'Tiempo de Contrato', layout: 'vertical' },
   { key: 'areaNegocio', label: 'Área de Negocio', layout: 'vertical' },
+  { key: 'seguimiento', label: 'Seguimiento', layout: 'vertical' },
+  // `fuente` es texto libre en GHL: cientos de valores, así que mostramos el top
+  { key: 'fuente', label: 'Fuente', layout: 'vertical', top: 12 },
   { key: 'fuenteLead', label: 'Fuente de Lead', layout: 'pie' },
   { key: 'pais', label: 'País', layout: 'pie' },
   { key: 'empresaInterna', label: 'Empresa Interna', layout: 'pie' },
@@ -57,7 +61,7 @@ function Card({ title, wide, children }) {
   )
 }
 
-export default function Charts({ rows }) {
+export default function Charts({ rows, year = DEFAULT_BILLING_YEAR }) {
   const [metricKey, setMetricKey] = useState('bookingTotal')
   const metric = METRICS.find((m) => m.key === metricKey)
   const fmt = metric.money ? fmtMoney : fmtNum
@@ -106,7 +110,7 @@ export default function Charts({ rows }) {
         </Card>
 
         {/* Series temporales (siempre en dinero) */}
-        <Card title="Facturación proyectada por mes (2026)" wide>
+        <Card title={`Facturación proyectada por mes (${year})`} wide>
           <AreaChart data={mensual} margin={{ left: 10, right: 10 }}>
             <defs>
               <linearGradient id="gFact" x1="0" y1="0" x2="0" y2="1">
