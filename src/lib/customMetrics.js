@@ -41,7 +41,7 @@ export const DATASETS = [
   },
   {
     key: 'ia',
-    label: 'Pipeline IA',
+    label: 'Pipelines IA',
     metrics: [CONTEO],
     fields: campos(FILTER_COLUMNS_IA),
     dates: [

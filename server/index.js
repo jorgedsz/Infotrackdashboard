@@ -12,6 +12,7 @@ import { initDb, AUTH_ENABLED } from './db.js'
 import { mountAuthRoutes, requireAuth, requireAdmin } from './auth.js'
 import { mountMetricsRoutes } from './metrics.js'
 import { mountViewsRoutes } from './views.js'
+import { initIaPipelines, getIaPipelines, mountIaPipelinesRoutes, etiquetaAgente } from './iaPipelines.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -21,8 +22,9 @@ app.use(express.json())
 const PORT = process.env.PORT || 3001
 const LOCATION = process.env.GHL_LOCATION_ID
 const PIPELINE = process.env.GHL_PIPELINE_ID || null
-const PIPELINE_IA = process.env.GHL_PIPELINE_IA || 'naloY0M2RJ60YgZGg0aI' // pipeline Llamadas IA
 const REFRESH_MS = Number(process.env.REFRESH_MS || 30 * 1000) // 30 s
+// Los pipelines IA (uno por agente) ya no se fijan acá: se eligen desde la
+// interfaz y se guardan en la DB (ver server/iaPipelines.js).
 
 const configured = () => Boolean(process.env.GHL_TOKEN && LOCATION)
 
@@ -32,13 +34,15 @@ const SEED_PATH = join(__dirname, '../src/data/pipeline.json')
 const seed = existsSync(SEED_PATH) ? JSON.parse(readFileSync(SEED_PATH, 'utf8')) : []
 
 let cache = { rows: seed, source: 'seed', updatedAt: null, error: null }
-let cacheIA = { rows: [], source: 'seed', updatedAt: null, error: null }
+let cacheIA = { rows: [], agentes: [], source: 'seed', updatedAt: null, error: null }
 let cacheCitas = { rows: [], source: 'seed', updatedAt: null, error: null }
 
 // Etapas cuyo nombre indica que hay una cita agendada (hoy: "Cita Agendada").
 const ES_ETAPA_CITA = /cita/i
 // Tope de contactos a consultar por refresh: cada uno es una llamada extra a GHL.
-const MAX_CONTACTOS_CITA = 300
+// Es un tope COMPARTIDO entre todos los pipelines IA; súbelo si al agregar
+// agentes empiezan a quedar citas fuera (el arranque avisa por consola).
+const MAX_CONTACTOS_CITA = Number(process.env.MAX_CONTACTOS_CITA || 300)
 
 // Ejecuta las promesas de a `limite` en paralelo; los fallos individuales no
 // tumban el lote (esa cita simplemente queda sin traer).
@@ -52,9 +56,31 @@ async function enLotes(items, limite, fn) {
   return out
 }
 
+// Trae las oportunidades de TODOS los pipelines IA seleccionados. Cada pipeline
+// se consulta por separado: si uno falla (id borrado en GHL, permisos), los demás
+// igual entran y el error se reporta en la respuesta.
+async function traerOppsIA(pipelinesIA) {
+  const fallos = []
+  const lotes = await Promise.all(
+    pipelinesIA.map(async (p) => {
+      try {
+        const opps = await searchOpportunities(LOCATION, p.id)
+        // La oportunidad ya trae pipelineId, pero lo fijamos con el pipeline que
+        // consultamos: así ninguna fila queda sin agente si la API lo omite.
+        return opps.map((o) => ({ ...o, pipelineId: o.pipelineId || p.id }))
+      } catch (e) {
+        fallos.push(`${p.id}: ${e.message || e}`)
+        return []
+      }
+    })
+  )
+  return { opps: lotes.flat(), fallos }
+}
+
 // Trae las citas de las oportunidades que están en etapa de cita agendada.
 // Una oportunidad puede compartir contacto con otra: deduplicamos por contacto
-// para no contar la misma cita dos veces.
+// para no contar la misma cita dos veces. Si el mismo contacto aparece en dos
+// pipelines IA, sus citas quedan atribuidas al primer agente que lo trajo.
 async function traerCitas(oppsIA, ctx) {
   const enCita = oppsIA.filter((o) => ES_ETAPA_CITA.test(ctx.stageById?.[o.pipelineStageId] || ''))
   const porContacto = new Map()
@@ -77,27 +103,37 @@ async function refresh() {
     return cache
   }
   try {
-    const [fields, pipelines, users, calendars, opps, oppsIA] = await Promise.all([
+    const pipelinesIA = await getIaPipelines()
+    const [fields, pipelines, users, calendars, opps, ia] = await Promise.all([
       getCustomFields(LOCATION, 'opportunity'),
       getPipelines(LOCATION),
       getUsers(LOCATION),
       getCalendars(LOCATION).catch(() => []), // sin calendarios seguimos: solo perdemos el nombre
       searchOpportunities(LOCATION, PIPELINE),
-      searchOpportunities(LOCATION, PIPELINE_IA),
+      traerOppsIA(pipelinesIA),
     ])
     const keyById = Object.fromEntries(fields.map((f) => [f.id, f.fieldKey]))
     const stageById = {}
     for (const p of pipelines) for (const s of p.stages || []) stageById[s.id] = s.name
     const userById = Object.fromEntries(users.map((u) => [u.id, u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim()]))
     const calendarById = Object.fromEntries(calendars.map((c) => [c.id, c.name]))
+    // Nombre del agente por pipeline: alias del admin, o el nombre que tiene en GHL.
+    const nombreGhl = Object.fromEntries(pipelines.map((p) => [p.id, p.name]))
+    const agenteById = Object.fromEntries(pipelinesIA.map((p) => [p.id, etiquetaAgente(p, nombreGhl[p.id])]))
     const now = new Date().toISOString()
     cache = { rows: mapAll(opps, { keyById, stageById, userById }), source: 'ghl', updatedAt: now, error: null }
-    cacheIA = { rows: mapAllIA(oppsIA, { stageById, userById }), source: 'ghl', updatedAt: now, error: null }
+    cacheIA = {
+      rows: mapAllIA(ia.opps, { stageById, userById, agenteById }),
+      agentes: pipelinesIA.map((p) => ({ id: p.id, agente: agenteById[p.id] })),
+      source: 'ghl',
+      updatedAt: now,
+      error: ia.fallos.length ? `No se pudo leer ${ia.fallos.length} pipeline(s) IA — ${ia.fallos.join(' | ')}` : null,
+    }
     // Las citas dependen de una llamada por contacto: si fallan, el resto del
     // refresh igual queda servido y se conserva el último set bueno.
     try {
       cacheCitas = {
-        rows: await traerCitas(oppsIA, { stageById, userById, calendarById }),
+        rows: await traerCitas(ia.opps, { stageById, userById, calendarById, agenteById }),
         source: 'ghl', updatedAt: now, error: null,
       }
     } catch (e) {
@@ -113,10 +149,13 @@ async function refresh() {
 mountAuthRoutes(app)
 mountMetricsRoutes(app)
 mountViewsRoutes(app)
+// Selección de pipelines IA (uno por agente), editable desde la interfaz.
+// Al guardar disparamos un refresh para que la data del nuevo agente entre ya.
+mountIaPipelinesRoutes(app, { locationId: LOCATION, onChange: refresh })
 
 // --- Endpoints ---
 app.get('/api/health', (_req, res) =>
-  res.json({ ok: true, configured: configured(), authEnabled: AUTH_ENABLED, source: cache.source, updatedAt: cache.updatedAt, rows: cache.rows.length, rowsIA: cacheIA.rows.length, citas: cacheCitas.rows.length, error: cache.error })
+  res.json({ ok: true, configured: configured(), authEnabled: AUTH_ENABLED, source: cache.source, updatedAt: cache.updatedAt, rows: cache.rows.length, rowsIA: cacheIA.rows.length, pipelinesIA: cacheIA.agentes?.length || 0, citas: cacheCitas.rows.length, error: cache.error })
 )
 
 // Restringe las filas según el usuario: admin o "ver todo" => todo;
@@ -135,9 +174,11 @@ app.get('/api/pipeline', requireAuth, (req, res) =>
   res.json({ rows: rowsForUser(req.user), source: cache.source, updatedAt: cache.updatedAt, error: cache.error })
 )
 
-// Pipeline IA (Llamadas IA) — visible para todos los usuarios autenticados.
+// Pipelines IA (uno por agente) — visible para todos los usuarios autenticados.
+// Vienen todos los agentes seleccionados en un mismo set; cada fila trae el suyo
+// en `agente` y el frontend filtra desde ahí.
 app.get('/api/pipeline-ia', requireAuth, (_req, res) =>
-  res.json({ rows: cacheIA.rows, source: cacheIA.source, updatedAt: cacheIA.updatedAt, error: cacheIA.error })
+  res.json({ rows: cacheIA.rows, agentes: cacheIA.agentes || [], source: cacheIA.source, updatedAt: cacheIA.updatedAt, error: cacheIA.error })
 )
 
 // Citas de las oportunidades en etapa "Cita Agendada" (una fila por cita).
@@ -190,6 +231,7 @@ if (existsSync(DIST)) {
 app.listen(PORT, async () => {
   console.log(`[infotrack] API en http://localhost:${PORT} | GHL ${configured() ? 'configurado' : 'NO configurado (usando seed)'}`)
   try { await initDb() } catch (e) { console.error('[infotrack] Error init DB:', e.message) }
+  try { await initIaPipelines() } catch (e) { console.error('[infotrack] Error init pipelines IA:', e.message) }
   await refresh()
   if (configured()) setInterval(refresh, REFRESH_MS)
 })

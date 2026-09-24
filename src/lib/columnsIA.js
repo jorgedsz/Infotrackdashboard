@@ -1,5 +1,6 @@
-// Columnas del dashboard del pipeline "Llamadas IA".
+// Columnas del dashboard de los pipelines IA (uno por agente).
 export const COLUMNS_IA = [
+  { key: 'agente', label: 'Agente', type: 'text', filter: 'category' },
   { key: 'contacto', label: 'Contacto', type: 'text', filter: 'search' },
   { key: 'empresa', label: 'Empresa', type: 'text', filter: 'search' },
   { key: 'email', label: 'Email', type: 'text', filter: null },

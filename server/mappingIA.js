@@ -9,10 +9,14 @@ const toISO = (v) => {
   return isNaN(d) ? null : d.toISOString().slice(0, 10)
 }
 
-// ctx: { stageById, userById }
+// ctx: { stageById, userById, agenteById }
+// `agenteById` resuelve pipelineId -> nombre del agente: cada pipeline IA es un
+// agente distinto y comparten etapas, así que la fila necesita saber de cuál viene.
 export function mapIA(opp, ctx) {
   const c = opp.contact || {}
   return {
+    agente: ctx.agenteById?.[opp.pipelineId] || '',
+    pipelineId: opp.pipelineId || '',
     contacto: c.name || opp.name || '',
     empresa: c.companyName || '',
     email: c.email || '',
