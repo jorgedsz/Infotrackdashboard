@@ -736,13 +736,13 @@ body {
 }
 .pipelineswitch__btn--active { background: var(--brand-blue); color: #fff; }
 
-/* ---------- Configuración de pipelines IA (uno por agente) ---------- */
-.iapipes__msg {
+/* ---------- Configuración de pipelines (comercial + agentes IA) ---------- */
+.cfg__msg {
   padding: 18px;
   color: var(--text-muted);
   font-size: 14px;
 }
-.iapipes__aviso {
+.cfg__aviso {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -755,7 +755,7 @@ body {
   font-size: 14px;
   margin-bottom: 14px;
 }
-.iapipes__link {
+.cfg__link {
   border: none;
   background: transparent;
   color: #79b4ff;
@@ -764,14 +764,14 @@ body {
   cursor: pointer;
   padding: 0;
 }
-.iapipes__ok {
+.cfg__ok {
   background: rgba(16, 185, 129, .15);
   color: #6ee7b7;
   border-radius: 8px;
   padding: 9px 12px;
   font-size: 13px;
 }
-.iapipes__alias {
+.cfg__alias {
   width: 100%;
   background: var(--surface-2);
   border: 1px solid var(--border-d);
@@ -780,7 +780,20 @@ body {
   padding: 6px 9px;
   font-size: 13px;
 }
-.iapipes__alias:disabled { opacity: .45; }
-.iapipes__etapas { color: var(--text-muted); white-space: nowrap; }
-.iapipes__row--on { background: rgba(0, 104, 255, 0.10); }
-.iapipes__hint { align-self: center; font-size: 12px; color: var(--text-muted); }
+.cfg__alias:disabled { opacity: .45; }
+.cfg__etapas { color: var(--text-muted); white-space: nowrap; }
+.cfg__row--on { background: rgba(0, 104, 255, 0.10); }
+.cfg__hint { align-self: center; font-size: 12px; color: var(--text-muted); }
+.cfg__nota { font-size: 12px; color: var(--text-muted); line-height: 1.5; font-weight: 400; text-transform: none; letter-spacing: 0; }
+.cfg__tag {
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  background: rgba(0, 104, 255, .22);
+  color: #9fc6ff;
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+.cfg__aviso--error { background: rgba(220, 38, 38, .14); border-color: rgba(220, 38, 38, .4); }
