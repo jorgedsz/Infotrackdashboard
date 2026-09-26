@@ -72,9 +72,14 @@ export function mountPipelinesConfigRoutes(app, { locationId, onChange } = {}) {
         getIaPipelines(),
         getPipelineComercial(),
       ])
+      // Un id configurado puede no estar en el catálogo (pipeline borrado en GHL,
+      // otra sub-cuenta, o una semilla vieja de las env vars). Lo marcamos para
+      // que la pantalla lo muestre en vez de arrastrarlo invisible.
+      const ids = new Set(pipelines.map((p) => p.id))
       res.json({
         comercial,
-        ia: ia.map((p) => ({ id: p.id, alias: p.alias })),
+        comercialExiste: comercial ? ids.has(comercial) : true,
+        ia: ia.map((p) => ({ id: p.id, alias: p.alias, existe: ids.has(p.id) })),
         pipelines: pipelines.map((p) => ({
           id: p.id,
           nombre: p.name,
@@ -100,7 +105,11 @@ export function mountPipelinesConfigRoutes(app, { locationId, onChange } = {}) {
           .filter(Boolean)
           .filter((id) => !ids.has(String(id).trim()))
         if (desconocidos.length) {
-          return res.status(400).json({ error: `Pipeline inexistente en GoHighLevel: ${desconocidos.join(', ')}` })
+          return res.status(400).json({
+            error: `Estos pipelines no están en la cuenta ${locationId}: ${desconocidos.join(', ')}. `
+              + 'Pueden haber sido borrados en GoHighLevel o pertenecer a otra sub-cuenta. '
+              + 'Elige uno de la lista o quita la marca.',
+          })
         }
       }
       const guardados = { comercial: await setPipelineComercial(comercial), ia: await setIaPipelines(ia) }

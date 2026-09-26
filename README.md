@@ -83,7 +83,9 @@ datos, donde la configuración vive en memoria y se pierde al reiniciar.
 
 - La data real **no** se versiona: el seed `src/data/pipeline.json` está en `.gitignore`.
   Todo se obtiene en vivo de GoHighLevel.
-- Endpoints de descubrimiento: `/api/ghl/pipelines`, `/api/ghl/custom-fields`, `/api/ghl/mapping-check`.
+- Endpoints de descubrimiento (**requieren sesión de admin**): `/api/ghl/pipelines`,
+  `/api/ghl/custom-fields`, `/api/ghl/mapping-check`. La lista de pipelines también se
+  ve, sin necesidad de llamarlos, en *Pipeline Comercial → Configuración*.
 - **Citas**: las oportunidades de los pipelines IA que están en la etapa *Cita Agendada* se cruzan
   contra `GET /contacts/{id}/appointments` (esa ruta solo responde con `Version: 2021-04-15`) y
   se sirven en `/api/citas` con **una fila por cita**. Están en *Pipeline IA → Citas* y como

@@ -2,11 +2,14 @@
 // en la base de datos y refresca GoHighLevel al guardar.
 import { apiFetch } from './http'
 
-// { comercial: id|null, ia: [{ id, alias }], pipelines: [{ id, nombre, etapas }] }
+// { comercial, comercialExiste, ia: [{ id, alias, existe }], pipelines: [{ id, nombre, etapas }] }
+// `existe`/`comercialExiste` en false = el id está configurado pero GoHighLevel
+// ya no lo devuelve (borrado, otra sub-cuenta, o semilla vieja de las env vars).
 export async function loadPipelinesConfig() {
   const data = await apiFetch('/api/pipelines/config')
   return {
     comercial: data.comercial ?? null,
+    comercialExiste: data.comercialExiste !== false,
     ia: data.ia || [],
     pipelines: data.pipelines || [],
   }
