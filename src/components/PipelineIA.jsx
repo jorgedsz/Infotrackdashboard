@@ -12,7 +12,6 @@ import { exportCSV, exportXLSX, exportPDF } from '../lib/export'
 import { useAuth } from '../context/AuthContext'
 import MultiSelect from './MultiSelect'
 import CitasIA from './CitasIA'
-import IaPipelinesAdmin from './IaPipelinesAdmin'
 
 const COLORS = ['#0068ff', '#002149', '#00c6ff', '#4b5160', '#6b7480', '#3385ff', '#0a4f9e', '#5ad8ff', '#94a3b0', '#80b4ff', '#013a7a', '#5e0', '#1e90ff', '#00b4d8']
 const PAGE_SIZES = [25, 50, 100, 'Todas']
@@ -54,7 +53,7 @@ function Card({ title, wide, children }) {
   )
 }
 
-export default function PipelineIA() {
+export default function PipelineIA({ onIrAConfig }) {
   const { user, authEnabled } = useAuth()
   const esAdmin = authEnabled === false || user?.role === 'admin'
 
@@ -67,7 +66,6 @@ export default function PipelineIA() {
   const [sub, setSub] = useState('tabla')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
-  const [recargar, setRecargar] = useState(0) // se incrementa al guardar la config
 
   useEffect(() => {
     const load = () => loadPipelineIA().then(({ rows, agentes, updatedAt, error }) => {
@@ -76,7 +74,7 @@ export default function PipelineIA() {
     load()
     const id = setInterval(load, 30 * 1000)
     return () => clearInterval(id)
-  }, [recargar])
+  }, [])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -124,11 +122,10 @@ export default function PipelineIA() {
   const start = (page - 1) * size
   const visible = allPages ? filtered : filtered.slice(start, start + size)
 
-  // Las sub-pestañas de Citas y Pipelines tienen su propio contenido: los KPIs
-  // y filtros de oportunidades no aplican ahí.
+  // La sub-pestaña de Citas tiene su propio dataset (una fila por cita), así que
+  // los KPIs y filtros de oportunidades no aplican ahí.
   const enCitas = sub === 'citas'
-  const enConfig = sub === 'config'
-  const conBarra = !enCitas && !enConfig
+  const conBarra = !enCitas
 
   // Sin pipelines configurados no hay nada que mostrar: se avisa y, si es admin,
   // se le manda directo a la pantalla donde los elige.
@@ -136,14 +133,17 @@ export default function PipelineIA() {
 
   return (
     <div>
-      {sinPipelines && !enConfig && (
-        <div className="iapipes__aviso">
-          No hay pipelines IA seleccionados.{' '}
+      {sinPipelines && (
+        <div className="cfg__aviso">
+          No hay pipelines de agentes IA seleccionados.{' '}
           {esAdmin
-            ? <button className="iapipes__link" onClick={() => setSub('config')}>Elegir pipelines →</button>
-            : 'Pídele a un administrador que los configure en Pipeline IA → Pipelines.'}
+            ? <button className="cfg__link" onClick={() => onIrAConfig?.()}>Elegir pipelines →</button>
+            : 'Pídele a un administrador que los configure en Pipeline Comercial → Configuración.'}
         </div>
       )}
+
+      {/* Un pipeline que falló al consultarse deja a su agente sin data: hay que verlo. */}
+      {meta.error && <div className="cfg__aviso cfg__aviso--error">{meta.error}</div>}
 
       {conBarra && (
       <section className="kpis">
@@ -181,11 +181,6 @@ export default function PipelineIA() {
         <button className={'tab' + (sub === 'tabla' ? ' tab--active' : '')} onClick={() => setSub('tabla')}>Tabla</button>
         <button className={'tab' + (sub === 'graficos' ? ' tab--active' : '')} onClick={() => setSub('graficos')}>Gráficos</button>
         <button className={'tab' + (enCitas ? ' tab--active' : '')} onClick={() => setSub('citas')}>Citas</button>
-        {esAdmin && (
-          <button className={'tab' + (enConfig ? ' tab--active' : '')} onClick={() => setSub('config')}>
-            Pipelines{agentes.length ? ` (${agentes.length})` : ''}
-          </button>
-        )}
         {conBarra && (
           <span style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: 12, color: 'var(--text-muted)' }}>
             {loading ? 'cargando…' : `${filtered.length} de ${rows.length}`}
@@ -193,9 +188,7 @@ export default function PipelineIA() {
         )}
       </nav>
 
-      {enConfig ? (
-        <IaPipelinesAdmin onSaved={() => setRecargar((n) => n + 1)} />
-      ) : enCitas ? <CitasIA /> : sub === 'tabla' ? (
+      {enCitas ? <CitasIA /> : sub === 'tabla' ? (
         <div>
           <div className="tablebar">
             <div className="exportbar">

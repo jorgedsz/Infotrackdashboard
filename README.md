@@ -18,12 +18,14 @@ Crea un `.env` a partir de `.env.example` con tus credenciales de GHL:
 ```
 GHL_TOKEN=pit-xxxxxxxx          # Private Integration token
 GHL_LOCATION_ID=xxxxxxxx        # ID de la sub-cuenta
-GHL_PIPELINE_ID=xxxxxxxx        # (opcional) pipeline COMERCIAL a mostrar
+GHL_PIPELINE_ID=xxxxxxxx        # (opcional) semilla del pipeline COMERCIAL
 PORT=3001
 REFRESH_MS=30000                # refresco automático cada 30 s
 ```
 
-Los **pipelines IA** no van en el `.env`: se eligen desde la interfaz (ver abajo).
+**Qué pipelines se leen no vive en el `.env`**: se elige desde la interfaz (ver abajo).
+`GHL_PIPELINE_ID` y `GHL_PIPELINE_IA` solo siembran la configuración en el primer
+arranque con la base de datos vacía.
 
 ## Producción (un solo servicio)
 
@@ -46,33 +48,36 @@ npm start       # Express sirve dist/ + la API
 1. Conecta este repo en Railway (build/start ya definidos en `railway.json`).
 2. Agrega un **PostgreSQL** al proyecto (New → Database → PostgreSQL). Railway crea `DATABASE_URL`.
 3. Carga las variables de entorno del servicio:
-   - GHL: `GHL_TOKEN`, `GHL_LOCATION_ID`, `GHL_PIPELINE_ID` (los pipelines IA se
-     eligen desde la interfaz, no acá)
+   - GHL: `GHL_TOKEN`, `GHL_LOCATION_ID` (qué pipelines se leen se elige desde la
+     interfaz, no acá)
    - Auth: `DATABASE_URL` (referencia la del Postgres), `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`
 4. Railway expone el servicio; el dashboard queda en `/infotrack-dashboard` y pedirá login.
 
-## Pipelines IA (uno por agente)
+## Configuración de pipelines (desde la interfaz)
 
-Cada agente de IA tiene su propio pipeline en GoHighLevel, todos con las mismas
-etapas. **Cuáles se muestran se elige desde la interfaz**, no por variable de entorno:
+Entra como **admin** a *Pipeline Comercial → Configuración*. Ahí se define, sobre la
+lista de pipelines que trae GoHighLevel:
 
-1. Entra como **admin** a *Pipeline IA → Pipelines*.
-2. Marca los pipelines de GHL que son de agentes y, si quieres, ponles un **alias**
+1. **Pipeline comercial**: cuál alimenta los KPIs, el booking y la facturación.
+   La opción *Todas las oportunidades de la cuenta* equivale a dejar
+   `GHL_PIPELINE_ID` vacío (mezcla todos los pipelines, incluidos los de IA).
+2. **Pipelines IA**: marca los que son de agentes y, si quieres, ponles un **alias**
    (el nombre con el que se verá el agente). Sin alias se usa el nombre de GHL.
-3. Guarda: la selección queda en la tabla `ia_pipelines` y el backend consulta
-   GoHighLevel de inmediato.
+   Un pipeline no puede ser comercial y de agente a la vez.
 
-Cuando el equipo cree un pipeline nuevo, aparece solo en esa lista: basta marcarlo,
-sin redeploy ni cambios de configuración.
+Al guardar, la configuración queda en la base de datos (`app_config` para el
+comercial, `ia_pipelines` para los agentes) y el backend consulta GoHighLevel de
+inmediato. Cuando el equipo cree un pipeline nuevo aparece solo en esa lista: basta
+configurarlo, sin redeploy ni variables de entorno.
 
 Todos los agentes seleccionados se sirven juntos en `/api/pipeline-ia`; cada fila
 trae su `agente`, que es columna, filtro (multi-select *Agente*) y dimensión de los
 gráficos comparativos (*Contactos por Agente*, *Embudo por etapa y agente*). Las
 **Citas** se traen de todos los agentes y también quedan etiquetadas.
 
-`GHL_PIPELINE_IA` sigue existiendo solo como semilla del primer arranque (admite
-varios ids separados por coma) y para dev sin base de datos, donde la selección
-vive en memoria y se pierde al reiniciar.
+`GHL_PIPELINE_ID` y `GHL_PIPELINE_IA` (esta admite varios ids separados por coma)
+siguen existiendo solo como semilla del primer arranque y para dev sin base de
+datos, donde la configuración vive en memoria y se pierde al reiniciar.
 
 ## Notas
 

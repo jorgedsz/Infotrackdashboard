@@ -12,7 +12,8 @@ import { initDb, AUTH_ENABLED } from './db.js'
 import { mountAuthRoutes, requireAuth, requireAdmin } from './auth.js'
 import { mountMetricsRoutes } from './metrics.js'
 import { mountViewsRoutes } from './views.js'
-import { initIaPipelines, getIaPipelines, mountIaPipelinesRoutes, etiquetaAgente } from './iaPipelines.js'
+import { initIaPipelines, getIaPipelines, etiquetaAgente } from './iaPipelines.js'
+import { initPipelinesConfig, getPipelineComercial, mountPipelinesConfigRoutes } from './pipelinesConfig.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -21,10 +22,9 @@ app.use(express.json())
 
 const PORT = process.env.PORT || 3001
 const LOCATION = process.env.GHL_LOCATION_ID
-const PIPELINE = process.env.GHL_PIPELINE_ID || null
 const REFRESH_MS = Number(process.env.REFRESH_MS || 30 * 1000) // 30 s
-// Los pipelines IA (uno por agente) ya no se fijan acá: se eligen desde la
-// interfaz y se guardan en la DB (ver server/iaPipelines.js).
+// Qué pipelines se leen ya no se fija acá: el comercial y los de IA se eligen
+// desde Configuración y se guardan en la DB (ver server/pipelinesConfig.js).
 
 const configured = () => Boolean(process.env.GHL_TOKEN && LOCATION)
 
@@ -103,13 +103,13 @@ async function refresh() {
     return cache
   }
   try {
-    const pipelinesIA = await getIaPipelines()
+    const [pipelinesIA, comercial] = await Promise.all([getIaPipelines(), getPipelineComercial()])
     const [fields, pipelines, users, calendars, opps, ia] = await Promise.all([
       getCustomFields(LOCATION, 'opportunity'),
       getPipelines(LOCATION),
       getUsers(LOCATION),
       getCalendars(LOCATION).catch(() => []), // sin calendarios seguimos: solo perdemos el nombre
-      searchOpportunities(LOCATION, PIPELINE),
+      searchOpportunities(LOCATION, comercial),
       traerOppsIA(pipelinesIA),
     ])
     const keyById = Object.fromEntries(fields.map((f) => [f.id, f.fieldKey]))
@@ -149,9 +149,9 @@ async function refresh() {
 mountAuthRoutes(app)
 mountMetricsRoutes(app)
 mountViewsRoutes(app)
-// Selección de pipelines IA (uno por agente), editable desde la interfaz.
-// Al guardar disparamos un refresh para que la data del nuevo agente entre ya.
-mountIaPipelinesRoutes(app, { locationId: LOCATION, onChange: refresh })
+// Configuración de pipelines (comercial + IA), editable desde la interfaz.
+// Al guardar disparamos un refresh para que la data nueva entre ya.
+mountPipelinesConfigRoutes(app, { locationId: LOCATION, onChange: refresh })
 
 // --- Endpoints ---
 app.get('/api/health', (_req, res) =>
@@ -232,6 +232,7 @@ app.listen(PORT, async () => {
   console.log(`[infotrack] API en http://localhost:${PORT} | GHL ${configured() ? 'configurado' : 'NO configurado (usando seed)'}`)
   try { await initDb() } catch (e) { console.error('[infotrack] Error init DB:', e.message) }
   try { await initIaPipelines() } catch (e) { console.error('[infotrack] Error init pipelines IA:', e.message) }
+  try { await initPipelinesConfig() } catch (e) { console.error('[infotrack] Error init config de pipelines:', e.message) }
   await refresh()
   if (configured()) setInterval(refresh, REFRESH_MS)
 })

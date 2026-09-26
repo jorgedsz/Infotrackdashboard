@@ -10,6 +10,7 @@ import CustomMetrics from '../components/CustomMetrics'
 import UsersAdmin from '../components/UsersAdmin'
 import ViewsBar from '../components/ViewsBar'
 import PipelineIA from '../components/PipelineIA'
+import PipelinesConfig from '../components/PipelinesConfig'
 import { useAuth } from '../context/AuthContext'
 
 const emptyFilters = () => Object.fromEntries(FILTER_COLUMNS.map((c) => [c.key, new Set()]))
@@ -33,6 +34,7 @@ const SOURCE_LABEL = {
 
 export default function InfoTrackDashboard() {
   const { user, authEnabled, logout } = useAuth()
+  const esAdmin = authEnabled === false || user?.role === 'admin'
   const [rawRows, setRawRows] = useState([])
   const [meta, setMeta] = useState({ source: null, updatedAt: null, error: null })
   const [loading, setLoading] = useState(true)
@@ -165,7 +167,7 @@ export default function InfoTrackDashboard() {
       </header>
 
       {pipeline === 'ia' ? (
-        <PipelineIA />
+        <PipelineIA onIrAConfig={() => { setPipeline('comercial'); setTab('config') }} />
       ) : (
         <>
           <KpiBar rows={filtered} />
@@ -193,9 +195,14 @@ export default function InfoTrackDashboard() {
             <button className={'tab' + (tab === 'metricas' ? ' tab--active' : '')} onClick={() => setTab('metricas')}>
               Mis Métricas
             </button>
-            {user?.role === 'admin' && (
+            {esAdmin && (
               <button className={'tab' + (tab === 'usuarios' ? ' tab--active' : '')} onClick={() => setTab('usuarios')}>
                 Usuarios
+              </button>
+            )}
+            {esAdmin && (
+              <button className={'tab' + (tab === 'config' ? ' tab--active' : '')} onClick={() => setTab('config')}>
+                Configuración
               </button>
             )}
           </nav>
@@ -203,7 +210,9 @@ export default function InfoTrackDashboard() {
           {tab === 'tabla' && <PipelineTable rows={filtered} year={billingYear} />}
           {tab === 'graficos' && <Charts rows={filtered} year={billingYear} />}
           {tab === 'metricas' && <CustomMetrics rows={allRows} />}
-          {tab === 'usuarios' && user?.role === 'admin' && <UsersAdmin />}
+          {tab === 'usuarios' && esAdmin && <UsersAdmin />}
+          {/* Al cambiar qué pipelines se leen, la data en pantalla queda vieja: recargamos. */}
+          {tab === 'config' && esAdmin && <PipelinesConfig onSaved={fetchData} />}
         </>
       )}
     </div>

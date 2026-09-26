@@ -1,12 +1,11 @@
 // Pipelines IA seleccionados desde la interfaz: uno por agente.
 //
 // Antes había un único pipeline fijado en GHL_PIPELINE_IA. Ahora la selección
-// vive en la tabla `ia_pipelines` y un admin la edita desde el dashboard, así
-// que un pipeline nuevo en GHL solo hay que marcarlo — sin redeploy.
+// vive en la tabla `ia_pipelines` y un admin la edita en Configuración, así que
+// un pipeline nuevo en GHL solo hay que marcarlo — sin redeploy.
 // Sin DATABASE_URL (dev) la selección queda en memoria, sembrada desde la env var.
+// Las rutas HTTP están en pipelinesConfig.js, junto al pipeline comercial.
 import { query, AUTH_ENABLED } from './db.js'
-import { requireAuth, requireAdmin } from './auth.js'
-import { getPipelines } from './ghl.js'
 
 // La env var vieja sigue sirviendo de semilla y ahora admite varios ids separados por coma.
 const semilla = () =>
@@ -56,7 +55,7 @@ export async function getIaPipelines() {
 }
 
 // Reemplaza la selección completa por la recibida.
-async function setIaPipelines(lista) {
+export async function setIaPipelines(lista) {
   const limpia = []
   const vistos = new Set()
   for (const [i, p] of lista.entries()) {
@@ -81,69 +80,3 @@ async function setIaPipelines(lista) {
 // Nombre a mostrar del agente: alias del admin > nombre del pipeline en GHL > id.
 export const etiquetaAgente = (sel, nombreGhl) => sel.alias || nombreGhl || sel.id
 
-// onChange: se llama tras guardar para forzar un refresh contra GHL con la nueva selección.
-export function mountIaPipelinesRoutes(app, { locationId, onChange } = {}) {
-  // Selección vigente, con el nombre real del pipeline resuelto desde GHL.
-  app.get('/api/ia-pipelines', requireAuth, async (_req, res) => {
-    try {
-      const sel = await getIaPipelines()
-      const nombres = await nombresGhl(locationId)
-      res.json({
-        pipelines: sel.map((p) => ({
-          id: p.id,
-          alias: p.alias,
-          nombre: nombres[p.id] || '',
-          agente: etiquetaAgente(p, nombres[p.id]),
-          existe: p.id in nombres,
-        })),
-      })
-    } catch (e) {
-      res.status(500).json({ error: String(e.message || e) })
-    }
-  })
-
-  // Catálogo para la pantalla de configuración: TODOS los pipelines de la
-  // location, marcando cuáles están seleccionados como pipelines IA.
-  app.get('/api/ia-pipelines/disponibles', requireAuth, requireAdmin, async (_req, res) => {
-    try {
-      const [pipelines, sel] = await Promise.all([getPipelines(locationId), getIaPipelines()])
-      const porId = new Map(sel.map((p) => [p.id, p]))
-      res.json({
-        pipelines: pipelines.map((p) => ({
-          id: p.id,
-          nombre: p.name,
-          etapas: (p.stages || []).map((s) => s.name),
-          seleccionado: porId.has(p.id),
-          alias: porId.get(p.id)?.alias || '',
-          orden: porId.get(p.id)?.orden ?? null,
-        })),
-      })
-    } catch (e) {
-      res.status(500).json({ error: String(e.message || e) })
-    }
-  })
-
-  // Guarda la selección completa: body { pipelines: [{ id, alias }] }
-  app.put('/api/ia-pipelines', requireAuth, requireAdmin, async (req, res) => {
-    const lista = Array.isArray(req.body?.pipelines) ? req.body.pipelines : null
-    if (!lista) return res.status(400).json({ error: 'Se espera { pipelines: [...] }' })
-    try {
-      const guardada = await setIaPipelines(lista)
-      // El refresh corre aparte: si falla, la selección igual quedó guardada.
-      if (onChange) onChange().catch((e) => console.warn('[infotrack] refresh tras guardar pipelines IA:', e.message))
-      res.json({ ok: true, pipelines: guardada })
-    } catch (e) {
-      res.status(500).json({ error: String(e.message || e) })
-    }
-  })
-}
-
-// Los nombres se piden a GHL; si falla, seguimos con los alias/ids.
-async function nombresGhl(locationId) {
-  try {
-    const pipelines = await getPipelines(locationId)
-    return Object.fromEntries(pipelines.map((p) => [p.id, p.name]))
-  } catch {
-    return {}
-  }
-}
