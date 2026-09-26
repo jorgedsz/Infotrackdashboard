@@ -11,6 +11,9 @@ export default function PipelinesConfig({ onSaved }) {
   const [comercial, setComercial] = useState(TODAS)
   const [ia, setIa] = useState({}) // id -> { alias }
   const [q, setQ] = useState('')
+  // Ids configurados que GoHighLevel ya no devuelve: se muestran aparte para que
+  // no viajen invisibles en el guardado.
+  const [huerfanos, setHuerfanos] = useState({ comercial: null, ia: [] })
   const [estado, setEstado] = useState({ cargando: true, guardando: false, error: '', ok: '' })
 
   const cargar = async () => {
@@ -18,7 +21,13 @@ export default function PipelinesConfig({ onSaved }) {
       const cfg = await loadPipelinesConfig()
       setPipelines(cfg.pipelines)
       setComercial(cfg.comercial || TODAS)
-      setIa(Object.fromEntries(cfg.ia.map((p) => [p.id, { alias: p.alias || '' }])))
+      // Los ids IA huérfanos no tienen fila donde mostrarse: se listan en el aviso
+      // y no entran en la selección, así que se van al guardar.
+      setIa(Object.fromEntries(cfg.ia.filter((p) => p.existe).map((p) => [p.id, { alias: p.alias || '' }])))
+      setHuerfanos({
+        comercial: cfg.comercialExiste ? null : cfg.comercial,
+        ia: cfg.ia.filter((p) => !p.existe).map((p) => p.id),
+      })
       setEstado((e) => ({ ...e, cargando: false, error: '' }))
     } catch (e) {
       setEstado((s) => ({ ...s, cargando: false, error: String(e.message || e) }))
@@ -75,9 +84,20 @@ export default function PipelinesConfig({ onSaved }) {
   if (estado.error && !pipelines.length) return <div className="login__error">{estado.error}</div>
 
   const nombreComercial = pipelines.find((p) => p.id === comercial)?.nombre
+  const hayHuerfanos = huerfanos.comercial || huerfanos.ia.length > 0
 
   return (
     <div className="cfg">
+      {hayHuerfanos && (
+        <div className="cfg__aviso cfg__aviso--error">
+          Configuración apuntando a pipelines que GoHighLevel ya no devuelve para esta
+          cuenta{huerfanos.comercial ? ` — comercial: ${huerfanos.comercial}` : ''}
+          {huerfanos.ia.length ? ` — agentes: ${huerfanos.ia.join(', ')}` : ''}.
+          {' '}Pueden haber sido borrados, estar en otra sub-cuenta, o venir de las variables
+          GHL_PIPELINE_ID / GHL_PIPELINE_IA. Elige los correctos abajo y guarda: los que
+          sobran se descartan.
+        </div>
+      )}
       <div className="cmbuilder">
         <span className="cmbuilder__label">
           Qué pipelines de GoHighLevel usa el dashboard. Cuando el equipo cree uno nuevo
@@ -89,6 +109,9 @@ export default function PipelinesConfig({ onSaved }) {
             <span>Pipeline comercial</span>
             <select value={comercial} onChange={(e) => elegirComercial(e.target.value)}>
               <option value={TODAS}>Todas las oportunidades de la cuenta</option>
+              {huerfanos.comercial === comercial && (
+                <option value={comercial}>⚠ {comercial} — no está en GoHighLevel</option>
+              )}
               {pipelines.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
             </select>
           </label>
