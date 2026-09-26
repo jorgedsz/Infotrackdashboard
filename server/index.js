@@ -199,20 +199,21 @@ app.post('/api/refresh', requireAuth, async (_req, res) => res.json(await refres
 app.get('/api/refresh', requireAuth, async (_req, res) => res.json(await refresh()))
 
 // --- Descubrimiento (para armar el mapeo de custom fields) ---
-app.get('/api/ghl/custom-fields', async (req, res) => {
+// Solo admin: exponen la estructura del CRM (pipelines, etapas, campos).
+app.get('/api/ghl/custom-fields', requireAuth, requireAdmin, async (req, res) => {
   try {
     const fields = await getCustomFields(LOCATION, req.query.model || 'opportunity')
     res.json(fields.map((f) => ({ id: f.id, name: f.name, dataType: f.dataType, fieldKey: f.fieldKey })))
   } catch (e) { res.status(500).json({ error: String(e.message || e) }) }
 })
-app.get('/api/ghl/pipelines', async (_req, res) => {
+app.get('/api/ghl/pipelines', requireAuth, requireAdmin, async (_req, res) => {
   try {
     const pipelines = await getPipelines(LOCATION)
     res.json(pipelines.map((p) => ({ id: p.id, name: p.name, stages: (p.stages || []).map((s) => s.name) })))
   } catch (e) { res.status(500).json({ error: String(e.message || e) }) }
 })
 // Muestra el mapeo actual + qué columnas quedaron sin custom field correspondiente.
-app.get('/api/ghl/mapping-check', async (_req, res) => {
+app.get('/api/ghl/mapping-check', requireAuth, requireAdmin, async (_req, res) => {
   try {
     const fields = await getCustomFields(LOCATION, 'opportunity')
     const keys = new Set(fields.map((f) => f.fieldKey))
