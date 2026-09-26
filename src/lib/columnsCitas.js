@@ -1,5 +1,6 @@
 // Columnas del dataset de CITAS (una fila por cita agendada).
 export const COLUMNS_CITAS = [
+  { key: 'agente', label: 'Agente', type: 'text', filter: 'category' },
   { key: 'contacto', label: 'Contacto', type: 'text', filter: 'search' },
   { key: 'empresa', label: 'Empresa', type: 'text', filter: 'search' },
   { key: 'telefono', label: 'Teléfono', type: 'text', filter: null },

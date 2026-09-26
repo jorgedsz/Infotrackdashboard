@@ -29,13 +29,14 @@ const ESTADO_CITA = {
   new: 'Nueva',
 }
 
-// ctx: { calendarById, userById, stageById }
+// ctx: { calendarById, userById, stageById, agenteById }
 export function mapCita(cita, opp, ctx) {
   const c = opp.contact || {}
   const inicio = parseFecha(cita.startTime)
   const agendada = parseFecha(cita.dateAdded)
   const estadoRaw = cita.appointmentStatus || cita.appoinmentStatus || '' // la API trae ambas grafías
   return {
+    agente: ctx.agenteById?.[opp.pipelineId] || '',
     contacto: c.name || opp.name || '',
     empresa: c.companyName || '',
     email: c.email || '',
