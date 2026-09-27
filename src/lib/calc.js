@@ -120,6 +120,36 @@ export function calcMBMensual(facturacion, mcb) {
   return facturacion.map((v) => v * pct)
 }
 
+// El Margen Mix del Excel es una fracción (0.14 = 14%). Desde GoHighLevel el
+// campo puede venir en cualquiera de las dos formas, así que normalizamos: un
+// valor mayor que 1 solo tiene sentido como porcentaje (14 => 0.14).
+export const fraccionMargen = (v) => {
+  const n = Number(v) || 0
+  return n > 1 ? n / 100 : n
+}
+
+// --- Contribución por trimestre (AV..AY del Excel) ---
+// Contribución Qn = facturación de los 3 meses del trimestre * Margen Mix.
+// Ojo: NO es lo mismo que el MB de arriba, que usa un % fijo por línea de
+// producto; la Contribución usa el Margen Mix propio de cada oportunidad y es
+// la cifra con la que el Excel mide metas y cumplimiento.
+export function calcContribucionTrimestral(facturacion, margenMix) {
+  const f = fraccionMargen(margenMix)
+  return [0, 1, 2, 3].map(
+    (q) => (facturacion[q * 3] + facturacion[q * 3 + 1] + facturacion[q * 3 + 2]) * f
+  )
+}
+
+// Trimestre y año de la fecha de cierre (AA y AB del Excel).
+export const trimestreDe = (iso) => {
+  const d = toDate(iso)
+  return d ? `Q${Math.floor(d.getMonth() / 3) + 1}` : ''
+}
+export const anioDe = (iso) => {
+  const d = toDate(iso)
+  return d ? String(d.getFullYear()) : ''
+}
+
 // --- Fila enriquecida con todas las columnas calculadas ---
 export function enrich(row, year = DEFAULT_BILLING_YEAR) {
   const mcb = calcMCB(row)
@@ -128,6 +158,7 @@ export function enrich(row, year = DEFAULT_BILLING_YEAR) {
   const probabilidad = probabilidadNum(row.probabilidadCierre)
   const totalFacturacion = facturacion.reduce((a, b) => a + b, 0)
   const totalMB = mb.reduce((a, b) => a + b, 0)
+  const contribucion = calcContribucionTrimestral(facturacion, row.margenMix)
   // Aplanamos los 12 meses como campos (facEne..facDic, mbEne..mbDic) para la tabla
   const flat = {}
   MESES.forEach((m, i) => {
@@ -144,6 +175,16 @@ export function enrich(row, year = DEFAULT_BILLING_YEAR) {
     mb,
     totalMB,
     ...flat,
+    // Contribución por trimestre del año de facturación elegido + el total del año
+    contribucion,
+    contribucionQ1: contribucion[0],
+    contribucionQ2: contribucion[1],
+    contribucionQ3: contribucion[2],
+    contribucionQ4: contribucion[3],
+    totalContribucion: contribucion.reduce((a, b) => a + b, 0),
+    // Trimestre y año de CIERRE (no de facturación): sirven para agrupar el pipeline
+    trimestreCierre: trimestreDe(row.fechaCierre),
+    anioCierre: anioDe(row.fechaCierre),
     probabilidad,
     tipoVenta: clasificacionDe(row.kare),
     venta: esTransaccional(row.tiempoContrato) ? 'Venta Transaccional' : 'Recurrente',

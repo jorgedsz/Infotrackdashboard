@@ -3,7 +3,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   PieChart, Pie, Cell, AreaChart, Area,
 } from 'recharts'
-import { sumBy, seriesMensual, mcbPorProducto, bookingPorLinea, stackPorProducto, LINEA_LABELS } from '../lib/aggregate'
+import { sumBy, seriesMensual, mcbPorProducto, bookingPorLinea, stackPorProducto, contribucionPorTrimestre, LINEA_LABELS } from '../lib/aggregate'
 import { DEFAULT_BILLING_YEAR } from '../lib/calc'
 import { fmtCompact, fmtMoney, fmtNum } from '../lib/format'
 
@@ -19,6 +19,7 @@ const METRICS = [
   { key: 'totalMCB', label: 'Total MCB', money: true, group: 'Totales' },
   { key: 'totalFacturacion', label: 'Total Facturación', money: true, group: 'Totales' },
   { key: 'totalMB', label: 'Total MB', money: true, group: 'Totales' },
+  { key: 'totalContribucion', label: 'Total Contribución', money: true, group: 'Totales' },
   { key: '__count__', label: '# Oportunidades', money: false, group: 'Totales' },
   // Montos detallados por línea de producto ($ de cada línea)
   { key: 'sumhw', label: '$ SUMHW', money: true, group: 'Por producto' },
@@ -48,6 +49,10 @@ const DIMENSIONS = [
   { key: 'tipoVenta', label: 'Tipo Venta (Nuevo/Renovación)', layout: 'pie' },
   { key: 'venta', label: 'Venta (Transaccional/Recurrente)', layout: 'pie' },
   { key: 'estado', label: 'Estado', layout: 'pie' },
+  // Trimestre y año de la fecha de cierre: permiten ver cualquier métrica por período
+  { key: 'forecast', label: 'Forecast / Upside', layout: 'vertical' },
+  { key: 'trimestreCierre', label: 'Trimestre de Cierre', layout: 'vertical' },
+  { key: 'anioCierre', label: 'Año de Cierre', layout: 'vertical' },
 ]
 
 function Card({ title, wide, children }) {
@@ -71,6 +76,7 @@ export default function Charts({ rows, year = DEFAULT_BILLING_YEAR }) {
   const mcb = useMemo(() => mcbPorProducto(rows), [rows])
   const bookingLinea = useMemo(() => bookingPorLinea(rows), [rows])
   const stackComercial = useMemo(() => stackPorProducto(rows, 'comercial', { top: 10 }), [rows])
+  const contribQ = useMemo(() => contribucionPorTrimestre(rows), [rows])
 
   const groups = ['Totales', 'Por producto']
 
@@ -130,6 +136,19 @@ export default function Charts({ rows, year = DEFAULT_BILLING_YEAR }) {
             <Area type="monotone" dataKey="facturacion" name="Facturación" stroke="#0068ff" fill="url(#gFact)" strokeWidth={2} />
             <Area type="monotone" dataKey="mb" name="Margen Bruto" stroke="#00c6ff" fill="url(#gMb)" strokeWidth={2} />
           </AreaChart>
+        </Card>
+
+        {/* Contribución por trimestre: facturación del trimestre * Margen Mix */}
+        <Card title={`Contribución por trimestre (${year})`}>
+          <BarChart data={contribQ} margin={{ left: 10, right: 10 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.09)" />
+            <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#9fb3c8" }} />
+            <YAxis tickFormatter={(v) => fmtCompact(v).replace('$', '')} tick={{ fontSize: 11, fill: "#9fb3c8" }} width={48} />
+            <Tooltip formatter={fmtMoney} />
+            <Bar dataKey="value" name="Contribución" radius={[4, 4, 0, 0]}>
+              {contribQ.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+            </Bar>
+          </BarChart>
         </Card>
 
         {/* Total de Booking por línea de producto */}

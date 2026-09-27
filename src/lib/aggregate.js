@@ -56,6 +56,16 @@ export function seriesMensual(rows) {
   return MESES.map((mes, i) => ({ name: mes, facturacion: fac[i], mb: mb[i] }))
 }
 
+// Contribución total por trimestre del año de facturación (Q1..Q4).
+export function contribucionPorTrimestre(rows) {
+  const q = [0, 0, 0, 0]
+  for (const r of rows) {
+    const c = r.contribucion || []
+    for (let i = 0; i < 4; i++) q[i] += c[i] || 0
+  }
+  return q.map((value, i) => ({ name: `Q${i + 1}`, value }))
+}
+
 // Composición apilada: por cada valor de la dimensión, el $ de cada línea de producto.
 const LINEAS = [
   { key: 'sumhw', label: 'SUMHW' },

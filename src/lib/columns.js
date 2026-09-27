@@ -41,6 +41,8 @@ export const buildColumns = (year = DEFAULT_BILLING_YEAR) => [
   { key: 'seguimiento', label: 'Seguimiento', type: 'text', filter: 'category' },
   { key: 'margenMix', label: 'Margen Mix', type: 'pctraw', filter: null },
   { key: 'areaNegocio', label: 'Área de Negocio', type: 'text', filter: 'category' },
+  // Clasificación manual que hace el comercial en GHL: Forecast / Upside / Indeterminado
+  { key: 'forecast', label: 'Forecast', type: 'text', filter: 'category' },
   // --- columnas calculadas ---
   { key: 'tipoVenta', label: 'Tipo Venta', type: 'text', filter: 'category', calc: true },
   { key: 'venta', label: 'Venta', type: 'text', filter: 'category', calc: true },
@@ -53,9 +55,19 @@ export const buildColumns = (year = DEFAULT_BILLING_YEAR) => [
   { key: 'totalMB', label: 'Total MB', type: 'money', filter: null, calc: true },
   ...mesesCols('mb', 'MB', year),
   { key: 'sensibilizado', label: 'Pipeline Sensibilizado', type: 'money', filter: null, calc: true },
+  // Contribución = facturación del trimestre * Margen Mix de la oportunidad. Es la
+  // cifra con la que el Excel mide metas; no confundir con el MB de arriba, que usa
+  // un % fijo por línea de producto.
+  { key: 'contribucionQ1', label: `Contrib. Q1 ${year}`, type: 'money', filter: null, calc: true },
+  { key: 'contribucionQ2', label: `Contrib. Q2 ${year}`, type: 'money', filter: null, calc: true },
+  { key: 'contribucionQ3', label: `Contrib. Q3 ${year}`, type: 'money', filter: null, calc: true },
+  { key: 'contribucionQ4', label: `Contrib. Q4 ${year}`, type: 'money', filter: null, calc: true },
+  { key: 'totalContribucion', label: `Total Contribución ${year}`, type: 'money', filter: null, calc: true },
   // --- fechas al final ---
   { key: 'fechaCreacion', label: 'F. Creación', type: 'date', filter: null },
   { key: 'fechaCierre', label: 'F. Cierre', type: 'date', filter: null },
+  { key: 'trimestreCierre', label: 'Trimestre cierre', type: 'text', filter: 'category', calc: true },
+  { key: 'anioCierre', label: 'Año cierre', type: 'text', filter: 'category', calc: true },
 ]
 
 export const COLUMNS = buildColumns()

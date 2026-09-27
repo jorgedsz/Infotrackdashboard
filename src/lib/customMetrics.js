@@ -14,6 +14,11 @@ export const METRIC_OPTIONS = [
   { key: 'totalMCB', label: 'Total MCB', money: true },
   { key: 'totalFacturacion', label: 'Total Facturación', money: true },
   { key: 'totalMB', label: 'Total MB', money: true },
+  { key: 'totalContribucion', label: 'Total Contribución', money: true },
+  { key: 'contribucionQ1', label: 'Contribución Q1', money: true },
+  { key: 'contribucionQ2', label: 'Contribución Q2', money: true },
+  { key: 'contribucionQ3', label: 'Contribución Q3', money: true },
+  { key: 'contribucionQ4', label: 'Contribución Q4', money: true },
   { key: 'sumhw', label: '$ SUMHW', money: true },
   { key: 'hwaas', label: '$ HWAAS', money: true },
   { key: 'svcs', label: '$ SVCS', money: true },
@@ -71,8 +76,15 @@ export const datasetMeta = (key) => DATASETS.find((d) => d.key === key) || DATAS
 // Campos disponibles para condicionar (las columnas categóricas del dataset)
 export const CONDITION_FIELDS = DATASETS[0].fields
 
+// GAP del Excel: ejecutado - meta (negativo = falta para llegar).
+const gapDe = (valor, meta) => (meta > 0 ? valor - meta : null)
+const pctDe = (valor, meta) => (meta > 0 ? Math.round((valor / meta) * 100) : null)
+
 // Evalúa una métrica: filtra por condiciones (AND entre condiciones, OR dentro de cada una)
 // + rangos de fecha, y agrega la métrica elegida.
+// Con `groupBy` devuelve además una fila por valor de ese campo, cada una con su
+// meta de `goals` (así una sola métrica arma el cuadro de metas por comercial,
+// por línea de negocio o por trimestre, en vez de una tarjeta por combinación).
 export function evalMetric(rows, def) {
   const conds = def.conditions || []
   const dates = def.dates || {}
@@ -89,11 +101,34 @@ export function evalMetric(rows, def) {
     }
     return true
   })
-  const value =
-    def.metric === '__count__'
-      ? matched.length
-      : matched.reduce((a, r) => a + (r[def.metric] || 0), 0)
-  return { value, count: matched.length }
+  const aporte = (r) => (def.metric === '__count__' ? 1 : r[def.metric] || 0)
+  const value = matched.reduce((a, r) => a + aporte(r), 0)
+  const total = { value, count: matched.length }
+  if (!def.groupBy) return total
+
+  const mapa = new Map()
+  for (const r of matched) {
+    const v = r[def.groupBy]
+    const k = v === '' || v == null ? '(sin dato)' : String(v)
+    const cur = mapa.get(k) || { name: k, value: 0, count: 0 }
+    cur.value += aporte(r)
+    cur.count += 1
+    mapa.set(k, cur)
+  }
+  // Los valores con meta se muestran aunque no tengan filas: un comercial en cero
+  // frente a su meta es justo lo que hay que ver.
+  const goals = def.goals || {}
+  for (const nombre of Object.keys(goals)) {
+    if (Number(goals[nombre]) > 0 && !mapa.has(nombre)) mapa.set(nombre, { name: nombre, value: 0, count: 0 })
+  }
+  const grupos = [...mapa.values()]
+    .map((g) => {
+      const meta = Number(goals[g.name]) || 0
+      return { ...g, meta, pct: pctDe(g.value, meta), gap: gapDe(g.value, meta) }
+    })
+    .sort((a, b) => b.value - a.value)
+  const metaTotal = grupos.reduce((a, g) => a + g.meta, 0)
+  return { ...total, grupos, metaTotal }
 }
 
 export const metricMeta = (key, dataset) => {
@@ -125,6 +160,8 @@ export function newMetricDef(datasetKey = 'comercial') {
     name: '',
     metric: ds.defaultMetric,
     goal: '',
+    groupBy: '', // '' = un solo número; si no, se desglosa por ese campo
+    goals: {}, // meta por valor del desglose: { 'Isabel Zapata': 760524764 }
     conditions: [{ field: ds.defaultField, values: [] }],
     dates: Object.fromEntries(ds.dates.map((d) => [d.key, { from: '', to: '' }])),
   }
