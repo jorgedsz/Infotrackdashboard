@@ -13,15 +13,32 @@ function authHeaders() {
   }
 }
 
+const esperar = (ms) => new Promise((r) => setTimeout(r, ms))
+
+// GHL corta conexiones y devuelve 429/503 de forma intermitente. Reintentamos
+// con backoff (0.5s, 1s, 2s) antes de rendirnos; un 4xx propio no se reintenta.
+const REINTENTOS = 3
+
 async function ghlGet(path, params = {}, version = VERSION) {
   const url = new URL(BASE + path)
   for (const [k, v] of Object.entries(params)) if (v != null) url.searchParams.set(k, v)
-  const res = await fetch(url, { headers: { ...authHeaders(), Version: version } })
-  if (!res.ok) {
+  let ultimo
+  for (let intento = 0; intento <= REINTENTOS; intento++) {
+    if (intento) await esperar(500 * 2 ** (intento - 1))
+    let res
+    try {
+      res = await fetch(url, { headers: { ...authHeaders(), Version: version } })
+    } catch (e) {
+      ultimo = new Error(`GHL ${path}: ${e.message}`) // red caída o conexión cortada
+      continue
+    }
+    if (res.ok) return res.json()
     const body = await res.text().catch(() => '')
-    throw new Error(`GHL ${res.status} ${path}: ${body.slice(0, 300)}`)
+    ultimo = new Error(`GHL ${res.status} ${path}: ${body.slice(0, 300)}`)
+    // Token inválido, id inexistente, permisos: insistir no cambia nada.
+    if (res.status !== 429 && res.status < 500) throw ultimo
   }
-  return res.json()
+  throw ultimo
 }
 
 // Custom fields de la location. model='opportunity' trae los campos comerciales

@@ -56,9 +56,14 @@ async function enLotes(items, limite, fn) {
   return out
 }
 
+// Última tanda buena de cada pipeline IA, para no vaciar a un agente cuando GHL
+// falla de forma pasajera (429, 503, conexión cortada).
+const ultimasOppsIA = new Map()
+
 // Trae las oportunidades de TODOS los pipelines IA seleccionados. Cada pipeline
-// se consulta por separado: si uno falla (id borrado en GHL, permisos), los demás
-// igual entran y el error se reporta en la respuesta.
+// se consulta por separado: si uno falla (id borrado en GHL, permisos, un corte),
+// los demás igual entran, se sirve la última data buena del que falló y el error
+// se reporta en la respuesta.
 async function traerOppsIA(pipelinesIA) {
   const fallos = []
   const lotes = await Promise.all(
@@ -67,14 +72,34 @@ async function traerOppsIA(pipelinesIA) {
         const opps = await searchOpportunities(LOCATION, p.id)
         // La oportunidad ya trae pipelineId, pero lo fijamos con el pipeline que
         // consultamos: así ninguna fila queda sin agente si la API lo omite.
-        return opps.map((o) => ({ ...o, pipelineId: o.pipelineId || p.id }))
+        const conAgente = opps.map((o) => ({ ...o, pipelineId: o.pipelineId || p.id }))
+        ultimasOppsIA.set(p.id, conAgente)
+        return conAgente
       } catch (e) {
-        fallos.push(`${p.id}: ${e.message || e}`)
-        return []
+        const previas = ultimasOppsIA.get(p.id) || []
+        fallos.push({ id: p.id, error: String(e.message || e), conservadas: previas.length })
+        return previas
       }
     })
   )
+  // Un pipeline que se deselecciona no debe seguir ocupando memoria.
+  const vigentes = new Set(pipelinesIA.map((p) => p.id))
+  for (const id of ultimasOppsIA.keys()) if (!vigentes.has(id)) ultimasOppsIA.delete(id)
   return { opps: lotes.flat(), fallos }
+}
+
+// Aviso para la pestaña IA: nombra al agente (no el id) y dice si lo que se ve
+// es su última data buena o si quedó sin nada.
+function avisoFallosIA(fallos, agenteById) {
+  return fallos
+    .map(({ id, error, conservadas }) => {
+      const quien = agenteById[id] || id
+      const estado = conservadas
+        ? `mostrando ${conservadas} contacto(s) del último refresco correcto`
+        : 'sin data para este agente'
+      return `${quien}: ${error} — ${estado}`
+    })
+    .join(' | ')
 }
 
 // Trae las citas de las oportunidades que están en etapa de cita agendada.
@@ -127,7 +152,9 @@ async function refresh() {
       agentes: pipelinesIA.map((p) => ({ id: p.id, agente: agenteById[p.id] })),
       source: 'ghl',
       updatedAt: now,
-      error: ia.fallos.length ? `No se pudo leer ${ia.fallos.length} pipeline(s) IA — ${ia.fallos.join(' | ')}` : null,
+      error: ia.fallos.length
+        ? `GoHighLevel falló en ${ia.fallos.length} pipeline(s) IA — ${avisoFallosIA(ia.fallos, agenteById)}`
+        : null,
     }
     // Las citas dependen de una llamada por contacto: si fallan, el resto del
     // refresh igual queda servido y se conserva el último set bueno.
