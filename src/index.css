@@ -784,3 +784,51 @@ body {
 .iapipes__etapas { color: var(--text-muted); white-space: nowrap; }
 .iapipes__row--on { background: rgba(0, 104, 255, 0.10); }
 .iapipes__hint { align-self: center; font-size: 12px; color: var(--text-muted); }
+
+/* Desglose de una métrica: una fila por comercial / línea / trimestre */
+.cmbreak { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+.cmbreak th {
+  text-align: right;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-muted);
+  font-weight: 700;
+  padding: 0 0 5px;
+  border-bottom: 1px solid var(--border-d);
+}
+.cmbreak th:first-child, .cmbreak td:first-child { text-align: left; }
+.cmbreak td {
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-d);
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cmbreak td + td, .cmbreak th + th { padding-left: 10px; }
+.cmbreak__num { text-align: right; font-variant-numeric: tabular-nums; }
+.cmbreak__num--neg { color: #ff9a9a; }
+.cmbreak__pct { font-weight: 700; color: var(--text-muted); }
+.cmbreak__pct--ok { color: #6ee7b7; }
+
+/* Captura de la meta de cada fila del desglose */
+.cmmetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.cmmetas__item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.cmmetas__item > span {
+  flex: 1 1 auto;
+  color: var(--text-d);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cmmetas__item input {
+  flex: 0 0 110px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-d);
+  color: var(--text-d);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+}

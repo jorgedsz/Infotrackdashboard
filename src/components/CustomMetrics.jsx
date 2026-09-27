@@ -14,11 +14,14 @@ const fmtVal = (def, v) => (metricMeta(def.metric, def.dataset).money ? fmtMoney
 
 // --- Tarjeta de una métrica ---
 function MetricCard({ def, rows, onEdit, onDelete }) {
-  const { value, count } = useMemo(() => evalMetric(rows, def), [rows, def])
+  const { value, count, grupos, metaTotal } = useMemo(() => evalMetric(rows, def), [rows, def])
   const ds = datasetMeta(def.dataset)
-  const goal = Number(def.goal) || 0
+  // Con desglose, la meta de cabecera es la suma de las metas por fila (si no se
+  // fijó una meta global aparte).
+  const goal = Number(def.goal) || metaTotal || 0
   const pct = goal > 0 ? Math.min(100, Math.round((value / goal) * 100)) : null
   const unidad = ds.key === 'citas' ? 'cita' : 'oportunidad'
+  const campoDesglose = ds.fields.find((f) => f.key === def.groupBy)
 
   return (
     <div className="cmcard">
@@ -42,6 +45,38 @@ function MetricCard({ def, rows, onEdit, onDelete }) {
             {pct}% · meta {fmtVal(def, goal)}
           </span>
         </div>
+      )}
+
+      {grupos && grupos.length > 0 && (
+        <table className="cmbreak">
+          <thead>
+            <tr>
+              <th>{campoDesglose?.label || def.groupBy}</th>
+              <th>Ejecutado</th>
+              <th>Meta</th>
+              <th>%</th>
+              <th>GAP</th>
+            </tr>
+          </thead>
+          <tbody>
+            {grupos.map((g) => (
+              <tr key={g.name}>
+                <td title={g.name}>{g.name}</td>
+                <td className="cmbreak__num">{fmtVal(def, g.value)}</td>
+                <td className="cmbreak__num">{g.meta ? fmtVal(def, g.meta) : '—'}</td>
+                <td className="cmbreak__num">
+                  {g.pct == null ? '—' : (
+                    <span className={'cmbreak__pct' + (g.pct >= 100 ? ' cmbreak__pct--ok' : '')}>{g.pct}%</span>
+                  )}
+                </td>
+                {/* GAP = ejecutado - meta: negativo es lo que falta */}
+                <td className={'cmbreak__num' + (g.gap != null && g.gap < 0 ? ' cmbreak__num--neg' : '')}>
+                  {g.gap == null ? '—' : fmtVal(def, g.gap)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
       {((def.conditions || []).some((c) => c.values?.length) ||
         ds.dates.some(({ key }) => def.dates?.[key]?.from || def.dates?.[key]?.to)) && (
@@ -106,15 +141,24 @@ function Builder({ rows, draft, setDraft, onSave, onCancel }) {
           </select>
         </label>
         <label className="cmfield">
-          <span>Meta (opcional)</span>
+          <span>Desglosar por (opcional)</span>
+          <select value={draft.groupBy || ''} onChange={(e) => setField('groupBy', e.target.value)}>
+            <option value="">Sin desglose (un solo número)</option>
+            {ds.fields.map((f) => <option key={f.key} value={f.key}>{f.label}</option>)}
+          </select>
+        </label>
+        <label className="cmfield">
+          <span>Meta {draft.groupBy ? 'total (opcional)' : '(opcional)'}</span>
           <input
             type="number"
             value={draft.goal}
-            placeholder="Ej. 20"
+            placeholder={draft.groupBy ? 'suma de las metas de abajo' : 'Ej. 20'}
             onChange={(e) => setField('goal', e.target.value)}
           />
         </label>
       </div>
+
+      {draft.groupBy && <MetasPorFila rows={rows} draft={draft} setDraft={setDraft} ds={ds} />}
 
       <div className="cmbuilder__conds">
         <span className="cmbuilder__label">Condiciones (se cumplen todas; dentro de cada una, cualquiera de los valores)</span>
@@ -170,6 +214,53 @@ function Builder({ rows, draft, setDraft, onSave, onCancel }) {
         <button className="cmbtn cmbtn--primary" onClick={onSave} disabled={!draft.name.trim()}>Guardar</button>
         <button className="cmbtn" onClick={onCancel}>Cancelar</button>
       </div>
+    </div>
+  )
+}
+
+// Metas por cada valor del campo de desglose (las filas del cuadro de resultados).
+const TOPE_VALORES = 40
+function MetasPorFila({ rows, draft, setDraft, ds }) {
+  const campo = ds.fields.find((f) => f.key === draft.groupBy)
+  const valores = useMemo(() => {
+    const set = new Set(rows.map((r) => (r[draft.groupBy] ?? '') === '' ? '(sin dato)' : String(r[draft.groupBy])))
+    for (const k of Object.keys(draft.goals || {})) set.add(k) // metas de valores que hoy no traen filas
+    return [...set].sort((a, b) => a.localeCompare(b, 'es'))
+  }, [rows, draft.groupBy, draft.goals])
+
+  const setMeta = (valor, meta) =>
+    setDraft((d) => {
+      const goals = { ...(d.goals || {}) }
+      if (meta === '') delete goals[valor]
+      else goals[valor] = meta
+      return { ...d, goals }
+    })
+
+  const visibles = valores.slice(0, TOPE_VALORES)
+  return (
+    <div className="cmbuilder__conds">
+      <span className="cmbuilder__label">
+        Meta de cada {campo?.label?.toLowerCase() || 'valor'} (opcional; en pesos, no en miles)
+      </span>
+      <div className="cmmetas">
+        {visibles.map((v) => (
+          <label className="cmmetas__item" key={v}>
+            <span title={v}>{v}</span>
+            <input
+              type="number"
+              value={draft.goals?.[v] ?? ''}
+              placeholder="sin meta"
+              onChange={(e) => setMeta(v, e.target.value)}
+            />
+          </label>
+        ))}
+      </div>
+      {valores.length > visibles.length && (
+        <span className="cmbuilder__label">
+          Mostrando {visibles.length} de {valores.length} valores. Si son tantos, conviene
+          desglosar por otro campo o filtrar con una condición.
+        </span>
+      )}
     </div>
   )
 }
@@ -230,7 +321,9 @@ export default function CustomMetrics({ rows }) {
       <div className="custommetrics__head">
         <p className="custommetrics__hint">
           Arma tus propias métricas sobre el pipeline comercial, el pipeline IA o las citas
-          agendadas: define condiciones, elige qué medir y, si quieres, una meta.
+          agendadas: define condiciones, elige qué medir y, si quieres, una meta. Con
+          <strong> desglosar por</strong> obtienes un cuadro con una fila por comercial,
+          línea o trimestre, cada una con su meta, su % de cumplimiento y su GAP.
         </p>
         {!draft && <button className="cmbtn cmbtn--primary" onClick={startNew}>+ Nueva métrica</button>}
       </div>
