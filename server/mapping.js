@@ -4,7 +4,9 @@
 // Los campos comerciales viven como CUSTOM FIELDS de OPORTUNIDAD en GHL.
 // Mapeamos por fieldKey (estable) -> columna del dashboard.
 
-// columnaDelDashboard : fieldKey del custom field de oportunidad en GHL
+// columnaDelDashboard : fieldKey del custom field de oportunidad en GHL.
+// El valor puede ser una lista de fieldKeys candidatos: se usa el primero que
+// exista en la location, así un campo renombrado no rompe el mapeo.
 export const FIELD_MAP = {
   pais: 'opportunity.pais',
   sumhw: 'opportunity.total_linea_sumhw',
@@ -27,6 +29,16 @@ export const FIELD_MAP = {
   margenMix: 'opportunity.margen_mix',
   areaNegocio: 'opportunity.area_de_negocio',
   codigoOp: 'opportunity.codigo_de_oportunidad',
+  // Clasificación manual del Excel ("Forecast - Esperado" / "Upside - Posible" /
+  // "Indeterminado"). Si en GHL se llama de otra forma, agrega su fieldKey acá:
+  // /api/ghl/mapping-check reporta cuáles no existen.
+  forecast: ['opportunity.forecast_manual', 'opportunity.forecast'],
+}
+
+// Lista de candidatos de una columna, siempre como arreglo.
+export const fieldKeysDe = (col) => {
+  const v = FIELD_MAP[col]
+  return Array.isArray(v) ? v : v ? [v] : []
 }
 
 const numericKeys = new Set(['sumhw', 'hwaas', 'svcs', 'swter', 'swss', 'recurrente', 'margenMix'])
@@ -65,7 +77,11 @@ function indexByKey(opp, keyById) {
 // ctx: { keyById, stageById, userById }
 export function mapOpportunity(opp, ctx) {
   const byKey = indexByKey(opp, ctx.keyById)
-  const pick = (col) => byKey[FIELD_MAP[col]]
+  // Primer candidato con valor (ver FIELD_MAP: un campo puede tener varios fieldKeys)
+  const pick = (col) => {
+    for (const key of fieldKeysDe(col)) if (byKey[key] !== undefined) return byKey[key]
+    return undefined
+  }
 
   const row = {
     pais: pick('pais') || '',
@@ -81,7 +97,8 @@ export function mapOpportunity(opp, ctx) {
   // Resto de columnas desde custom fields
   for (const col of ['sumhw', 'hwaas', 'svcs', 'swter', 'swss', 'proyecto', 'productos',
     'lineaNegocio', 'aliado', 'kare', 'probabilidadCierre', 'fechaInicioFact', 'fechaCierre',
-    'recurrente', 'tiempoContrato', 'fuenteLead', 'seguimiento', 'margenMix', 'areaNegocio']) {
+    'recurrente', 'tiempoContrato', 'fuenteLead', 'seguimiento', 'margenMix', 'areaNegocio',
+    'forecast']) {
     let v = pick(col)
     if (numericKeys.has(col)) v = toNum(v)
     else if (dateKeys.has(col)) v = toISO(v)

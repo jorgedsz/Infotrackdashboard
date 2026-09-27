@@ -20,6 +20,7 @@ export default function KpiBar({ rows }) {
     { label: 'Total MCB', value: fmtMoney(sum('totalMCB')), accent: C.blue, money: true },
     { label: 'Total Facturación', value: fmtMoney(sum('totalFacturacion')), accent: C.navy, money: true },
     { label: 'Total MB', value: fmtMoney(sum('totalMB')), accent: C.cyan, money: true },
+    { label: 'Total Contribución', value: fmtMoney(sum('totalContribucion')), accent: C.blue, money: true },
   ]
   const dateKpis = [
     { label: 'Creación (rango)', value: range('fechaCreacion'), accent: C.gray },

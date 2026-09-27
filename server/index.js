@@ -5,7 +5,7 @@ import { readFileSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { getCustomFields, getPipelines, searchOpportunities, getUsers, getCalendars, getContactAppointments } from './ghl.js'
-import { mapAll, FIELD_MAP } from './mapping.js'
+import { mapAll, FIELD_MAP, fieldKeysDe } from './mapping.js'
 import { mapAllIA } from './mappingIA.js'
 import { mapAllCitas } from './mappingCitas.js'
 import { initDb, AUTH_ENABLED } from './db.js'
@@ -216,8 +216,18 @@ app.get('/api/ghl/mapping-check', async (_req, res) => {
   try {
     const fields = await getCustomFields(LOCATION, 'opportunity')
     const keys = new Set(fields.map((f) => f.fieldKey))
-    const check = Object.entries(FIELD_MAP).map(([col, key]) => ({ columna: col, fieldKey: key, existe: keys.has(key) }))
-    res.json({ check, faltantes: check.filter((c) => !c.existe).map((c) => c.fieldKey) })
+    // Una columna puede tener varios fieldKeys candidatos: existe si alguno está.
+    const check = Object.keys(FIELD_MAP).map((col) => {
+      const candidatos = fieldKeysDe(col)
+      const encontrado = candidatos.find((k) => keys.has(k)) || null
+      return { columna: col, candidatos, fieldKey: encontrado, existe: Boolean(encontrado) }
+    })
+    res.json({
+      check,
+      faltantes: check.filter((c) => !c.existe).map((c) => ({ columna: c.columna, probados: c.candidatos })),
+      // Para encontrar el nombre correcto de un campo que no se halló
+      disponibles: [...keys].sort(),
+    })
   } catch (e) { res.status(500).json({ error: String(e.message || e) }) }
 })
 

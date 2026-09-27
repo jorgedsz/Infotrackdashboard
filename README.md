@@ -92,7 +92,22 @@ vive en memoria y se pierde al reiniciar.
   `opportunity.seguimiento` (8 etapas de follow-up). Ambos son filtrables y sirven como
   condición en *Mis Métricas*; para agrupar bien por Fuente hay que normalizarla en el CRM.
 - El motor de cálculo (`src/lib/calc.js`) replica las fórmulas del Excel: MCB, facturación
-  mensual, MB, probabilidad, pipeline sensibilizado, etc.
+  mensual, MB, probabilidad, pipeline sensibilizado, contribución por trimestre, etc.
+- **MB y Contribución no son lo mismo**, aunque ambos midan margen:
+  - **MB** = facturación del mes × un % fijo según la línea de producto dominante
+    (`MB_PCT` en `calc.js`: 24 % SUMHW, 34 % HWAAS, 35 % SVCS…).
+  - **Contribución Qn** = facturación de los 3 meses del trimestre × el **Margen Mix**
+    propio de esa oportunidad. Es la cifra con la que el Excel mide metas y cumplimiento
+    en sus hojas *Resultados* y *Consultores*, y la que hay que usar para compararse
+    contra ellas. Verificada contra el Excel: 301 oportunidades, cero diferencias.
+  - El Margen Mix se normaliza al leerlo: si llega mayor que 1 se interpreta como
+    porcentaje (14 → 0,14), porque en el Excel es una fracción.
+- **Trimestre y Año de cierre** salen de la fecha de cierre y sirven como filtro y como
+  dimensión de los gráficos.
+- **Forecast** es la clasificación manual del comercial en GHL (*Forecast - Esperado*,
+  *Upside - Posible*, *Indeterminado*). `FIELD_MAP` admite varios `fieldKey` candidatos
+  por columna: se usa el primero que exista en la location. Si la columna sale vacía,
+  `/api/ghl/mapping-check` dice qué se probó y lista los campos disponibles.
 - **Año de facturación**: el desglose mensual (Ene–Dic) y el MB se calculan sobre el año que
   se elija en el selector *"Año fact."* del encabezado. Por defecto es el año en curso y la
   elección queda guardada en el navegador; las opciones salen de los años que cubre la data
