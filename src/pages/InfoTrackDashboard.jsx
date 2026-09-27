@@ -11,6 +11,7 @@ import UsersAdmin from '../components/UsersAdmin'
 import ViewsBar from '../components/ViewsBar'
 import PipelineIA from '../components/PipelineIA'
 import PipelinesConfig from '../components/PipelinesConfig'
+import EvolucionPipeline from '../components/EvolucionPipeline'
 import { useAuth } from '../context/AuthContext'
 
 const emptyFilters = () => Object.fromEntries(FILTER_COLUMNS.map((c) => [c.key, new Set()]))
@@ -195,6 +196,9 @@ export default function InfoTrackDashboard() {
             <button className={'tab' + (tab === 'metricas' ? ' tab--active' : '')} onClick={() => setTab('metricas')}>
               Mis Métricas
             </button>
+            <button className={'tab' + (tab === 'evolucion' ? ' tab--active' : '')} onClick={() => setTab('evolucion')}>
+              Evolución
+            </button>
             {esAdmin && (
               <button className={'tab' + (tab === 'usuarios' ? ' tab--active' : '')} onClick={() => setTab('usuarios')}>
                 Usuarios
@@ -210,6 +214,8 @@ export default function InfoTrackDashboard() {
           {tab === 'tabla' && <PipelineTable rows={filtered} year={billingYear} />}
           {tab === 'graficos' && <Charts rows={filtered} year={billingYear} />}
           {tab === 'metricas' && <CustomMetrics rows={allRows} />}
+          {/* La evolución compara fotos ya archivadas: no depende de los filtros de arriba */}
+          {tab === 'evolucion' && <EvolucionPipeline />}
           {tab === 'usuarios' && esAdmin && <UsersAdmin />}
           {/* Al cambiar qué pipelines se leen, la data en pantalla queda vieja: recargamos. */}
           {tab === 'config' && esAdmin && <PipelinesConfig onSaved={fetchData} />}

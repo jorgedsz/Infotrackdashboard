@@ -900,3 +900,35 @@ body {
   padding: 6px 8px;
   font-size: 13px;
 }
+
+/* Evolución del pipeline (comparación entre fotos archivadas) */
+.evol__barra {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--border-d);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.evol__campo { display: flex; flex-direction: column; gap: 4px; }
+.evol__campo span {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-muted);
+}
+.evol__campo select {
+  background: var(--surface-2);
+  border: 1px solid var(--border-d);
+  color: var(--text-d);
+  border-radius: 8px;
+  padding: 7px 9px;
+  font-size: 13px;
+}
+.evol__info { margin-left: auto; align-self: center; font-size: 12px; color: var(--text-muted); }
+.evol__pos { color: #6ee7b7; }
+.evol__neg { color: #ff9a9a; }

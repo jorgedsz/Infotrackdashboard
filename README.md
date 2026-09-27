@@ -79,6 +79,20 @@ gráficos comparativos (*Contactos por Agente*, *Embudo por etapa y agente*). La
 siguen existiendo solo como semilla del primer arranque y para dev sin base de
 datos, donde la configuración vive en memoria y se pierde al reiniciar.
 
+## Evolución del pipeline (histórico)
+
+La pestaña *Evolución* replica la hoja **Evol.Pipeline** del Excel: el valor de cada
+estado (o fase, o comercial) en dos fechas, con su **diferencia** y su **variación %**,
+más una línea de tiempo con todas las fotos archivadas.
+
+Como el dashboard lee GoHighLevel en vivo, no hay pasado que comparar si no se guarda:
+el backend archiva **una foto por día** en la tabla `pipeline_snapshots` (la última del
+día manda) con el booking y el número de oportunidades por estado, fase y comercial. Un
+admin puede forzar la del día desde la misma pantalla.
+
+Por eso la vista **se llena con el tiempo**: el primer día solo hay una foto y no hay nada
+que comparar. Sin `DATABASE_URL` (dev) no hay histórico y la pantalla lo dice.
+
 ## Notas
 
 - La data real **no** se versiona: el seed `src/data/pipeline.json` está en `.gitignore`.

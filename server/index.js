@@ -14,6 +14,7 @@ import { mountMetricsRoutes } from './metrics.js'
 import { mountViewsRoutes } from './views.js'
 import { initIaPipelines, getIaPipelines, etiquetaAgente } from './iaPipelines.js'
 import { initPipelinesConfig, getPipelineComercial, mountPipelinesConfigRoutes } from './pipelinesConfig.js'
+import { initSnapshots, guardarSnapshotDiario, mountSnapshotsRoutes } from './snapshots.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -147,6 +148,8 @@ async function refresh() {
     const agenteById = Object.fromEntries(pipelinesIA.map((p) => [p.id, etiquetaAgente(p, nombreGhl[p.id])]))
     const now = new Date().toISOString()
     cache = { rows: mapAll(opps, { keyById, stageById, userById }), source: 'ghl', updatedAt: now, error: null }
+    // Foto diaria del pipeline para la vista de Evolución (no bloquea el refresh)
+    guardarSnapshotDiario(cache.rows)
     cacheIA = {
       rows: mapAllIA(ia.opps, { stageById, userById, agenteById }),
       agentes: pipelinesIA.map((p) => ({ id: p.id, agente: agenteById[p.id] })),
@@ -179,6 +182,8 @@ mountViewsRoutes(app)
 // Configuración de pipelines (comercial + IA), editable desde la interfaz.
 // Al guardar disparamos un refresh para que la data nueva entre ya.
 mountPipelinesConfigRoutes(app, { locationId: LOCATION, onChange: refresh })
+// Histórico del pipeline (Evolución semana a semana)
+mountSnapshotsRoutes(app, { rowsActuales: () => cache.rows })
 
 // --- Endpoints ---
 app.get('/api/health', (_req, res) =>
@@ -271,6 +276,7 @@ app.listen(PORT, async () => {
   try { await initDb() } catch (e) { console.error('[infotrack] Error init DB:', e.message) }
   try { await initIaPipelines() } catch (e) { console.error('[infotrack] Error init pipelines IA:', e.message) }
   try { await initPipelinesConfig() } catch (e) { console.error('[infotrack] Error init config de pipelines:', e.message) }
+  try { await initSnapshots() } catch (e) { console.error('[infotrack] Error init histórico:', e.message) }
   await refresh()
   if (configured()) setInterval(refresh, REFRESH_MS)
 })
