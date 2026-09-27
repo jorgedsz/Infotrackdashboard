@@ -932,3 +932,52 @@ body {
 .evol__info { margin-left: auto; align-self: center; font-size: 12px; color: var(--text-muted); }
 .evol__pos { color: #6ee7b7; }
 .evol__neg { color: #ff9a9a; }
+
+/* Editor de las tablas de cálculo */
+.tabs--sub { margin-bottom: 14px; }
+.tabc__head { cursor: pointer; display: flex; align-items: center; gap: 10px; }
+.tabc__head::marker { color: var(--text-muted); }
+.tabc__cuenta { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+.tabc__buscar {
+  width: 100%;
+  max-width: 280px;
+  margin: 8px 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border-d);
+  color: var(--text-d);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+.tabc__lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 6px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.tabc__fila { display: flex; align-items: center; gap: 6px; }
+.tabc__clave {
+  flex: 1 1 auto;
+  font-size: 13px;
+  color: var(--text-d);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tabc__fila input, .tabc__nueva input, .tabc__margenes input {
+  background: var(--surface-2);
+  border: 1px solid var(--border-d);
+  color: var(--text-d);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+.tabc__fila input { flex: 0 0 96px; }
+.tabc__unidad { font-size: 12px; color: var(--text-muted); }
+.tabc__rm { border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 13px; }
+.tabc__nueva { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.tabc__nueva input { flex: 1 1 200px; }
+.tabc__margenes { max-width: 420px; margin-top: 10px; }
+.tabc__margenes input { width: 90px; }

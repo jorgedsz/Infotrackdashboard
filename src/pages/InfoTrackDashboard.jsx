@@ -10,8 +10,9 @@ import CustomMetrics from '../components/CustomMetrics'
 import UsersAdmin from '../components/UsersAdmin'
 import ViewsBar from '../components/ViewsBar'
 import PipelineIA from '../components/PipelineIA'
-import PipelinesConfig from '../components/PipelinesConfig'
+import Configuracion from '../components/Configuracion'
 import EvolucionPipeline from '../components/EvolucionPipeline'
+import { loadTablas } from '../services/tablasApi'
 import { useAuth } from '../context/AuthContext'
 
 const emptyFilters = () => Object.fromEntries(FILTER_COLUMNS.map((c) => [c.key, new Set()]))
@@ -57,6 +58,12 @@ export default function InfoTrackDashboard() {
     return () => clearInterval(id)
   }, [fetchData])
 
+  // Tablas de cálculo (márgenes, probabilidades, KARE, aliados). Hasta que lleguen,
+  // calc.js usa los valores por defecto del código.
+  const [tablas, setTablas] = useState(null)
+  const fetchTablas = useCallback(() => loadTablas().then(({ tablas }) => setTablas(tablas)), [])
+  useEffect(() => { fetchTablas() }, [fetchTablas])
+
   // Año sobre el que se reparte la facturación mensual (Ene–Dic)
   const [billingYear, setBillingYear] = useState(initialYear)
   useEffect(() => {
@@ -71,7 +78,7 @@ export default function InfoTrackDashboard() {
   }, [rawRows, billingYear])
 
   // Enriquecemos: aplica todas las fórmulas a las oportunidades
-  const allRows = useMemo(() => enrichAll(rawRows, billingYear), [rawRows, billingYear])
+  const allRows = useMemo(() => enrichAll(rawRows, billingYear, tablas), [rawRows, billingYear, tablas])
 
   const [filters, setFilters] = useState(emptyFilters)
   const [search, setSearch] = useState('')
@@ -218,7 +225,9 @@ export default function InfoTrackDashboard() {
           {tab === 'evolucion' && <EvolucionPipeline />}
           {tab === 'usuarios' && esAdmin && <UsersAdmin />}
           {/* Al cambiar qué pipelines se leen, la data en pantalla queda vieja: recargamos. */}
-          {tab === 'config' && esAdmin && <PipelinesConfig onSaved={fetchData} />}
+          {tab === 'config' && esAdmin && (
+            <Configuracion onSaved={() => { fetchData(); fetchTablas() }} />
+          )}
         </>
       )}
     </div>

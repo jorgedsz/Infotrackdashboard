@@ -15,6 +15,7 @@ import { mountViewsRoutes } from './views.js'
 import { initIaPipelines, getIaPipelines, etiquetaAgente } from './iaPipelines.js'
 import { initPipelinesConfig, getPipelineComercial, mountPipelinesConfigRoutes } from './pipelinesConfig.js'
 import { initSnapshots, guardarSnapshotDiario, mountSnapshotsRoutes } from './snapshots.js'
+import { initTablas, mountTablasRoutes } from './tablas.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -184,6 +185,8 @@ mountViewsRoutes(app)
 mountPipelinesConfigRoutes(app, { locationId: LOCATION, onChange: refresh })
 // Histórico del pipeline (Evolución semana a semana)
 mountSnapshotsRoutes(app, { rowsActuales: () => cache.rows })
+// Tablas de cálculo (márgenes, probabilidades, KARE, aliado→arquitecto)
+mountTablasRoutes(app)
 
 // --- Endpoints ---
 app.get('/api/health', (_req, res) =>
@@ -277,6 +280,7 @@ app.listen(PORT, async () => {
   try { await initIaPipelines() } catch (e) { console.error('[infotrack] Error init pipelines IA:', e.message) }
   try { await initPipelinesConfig() } catch (e) { console.error('[infotrack] Error init config de pipelines:', e.message) }
   try { await initSnapshots() } catch (e) { console.error('[infotrack] Error init histórico:', e.message) }
+  try { await initTablas() } catch (e) { console.error('[infotrack] Error init tablas de cálculo:', e.message) }
   await refresh()
   if (configured()) setInterval(refresh, REFRESH_MS)
 })

@@ -2,17 +2,19 @@
 // Replica las fórmulas del Excel "Dashboard Comercial" en JavaScript puro,
 // para poder recalcular en tiempo real con datos que lleguen desde GoHighLevel.
 
-import lookups from '../data/lookups.json'
+import TABLAS_DEFECTO from '../data/tablasCalculo.json'
+
+// Las tablas (márgenes por línea, probabilidades, KARE, aliado→arquitecto) se
+// editan desde Configuración y llegan por parámetro. Si no llegan -- dev sin
+// backend, o un fallo al cargarlas -- se usan las de `tablasCalculo.json`.
+export { TABLAS_DEFECTO }
+const tablasDe = (t) => t || TABLAS_DEFECTO
 
 // Año objetivo del modelo de facturación: el Excel repartía sobre 12 meses de un
 // año fijo (2026). Acá el año es un parámetro; si no se pasa, se usa el año en curso.
 export const DEFAULT_BILLING_YEAR = new Date().getFullYear()
 export const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
 
-// % de Margen de Contribución Bruto (MCB) por línea de producto
-const MCB_PCT = { sumhw: 0.22, hwaas: 0.28, svcs: 0.35, swter: 0.27, swss: 0.27 }
-// % de Margen Bruto (MB) mensual, según la línea de producto con MCB > 0
-const MB_PCT = { sumhw: 0.24, hwaas: 0.34, svcs: 0.35, swter: 0.30, swss: 0.27 }
 
 const toDate = (v) => (v ? new Date(v + 'T00:00:00') : null)
 const monthsFromContrato = (txt) => {
@@ -30,24 +32,25 @@ export function empresaInternaDe(row) {
 }
 
 // --- Lookups (VLOOKUP del Excel) ---
-export const probabilidadNum = (texto) => {
+export const probabilidadNum = (texto, tablas) => {
   if (texto == null || texto === '') return 0
-  const v = lookups.probabilidad[String(texto).trim()]
+  const v = tablasDe(tablas).probabilidad?.[String(texto).trim()]
   return typeof v === 'number' ? v : 0
 }
-export const arquitectoDe = (aliado) =>
-  lookups.aliadoArquitecto[String(aliado || '').trim()] ?? ''
-export const clasificacionDe = (kare) =>
-  lookups.kareClasificacion[String(kare || '').trim()] ?? ''
+export const arquitectoDe = (aliado, tablas) =>
+  tablasDe(tablas).aliadoArquitecto?.[String(aliado || '').trim()] ?? ''
+export const clasificacionDe = (kare, tablas) =>
+  tablasDe(tablas).kareClasificacion?.[String(kare || '').trim()] ?? ''
 
 // --- MCB por producto y total ---
-export function calcMCB(row) {
+export function calcMCB(row, tablas) {
+  const pct = tablasDe(tablas).mcb || {}
   const mcb = {
-    sumhw: (row.sumhw || 0) * MCB_PCT.sumhw,
-    hwaas: (row.hwaas || 0) * MCB_PCT.hwaas,
-    svcs: (row.svcs || 0) * MCB_PCT.svcs,
-    swter: (row.swter || 0) * MCB_PCT.swter,
-    swss: (row.swss || 0) * MCB_PCT.swss,
+    sumhw: (row.sumhw || 0) * (pct.sumhw || 0),
+    hwaas: (row.hwaas || 0) * (pct.hwaas || 0),
+    svcs: (row.svcs || 0) * (pct.svcs || 0),
+    swter: (row.swter || 0) * (pct.swter || 0),
+    swss: (row.swss || 0) * (pct.swss || 0),
   }
   mcb.total = mcb.sumhw + mcb.hwaas + mcb.svcs + mcb.swter + mcb.swss
   return mcb
@@ -114,9 +117,9 @@ export function aniosDeFacturacion(
 }
 
 // --- MB mes a mes (AR..BC) = facturación del mes * % según línea dominante ---
-export function calcMBMensual(facturacion, mcb) {
+export function calcMBMensual(facturacion, mcb, tablas) {
   const linea = lineaDominante(mcb)
-  const pct = linea ? MB_PCT[linea] : 0
+  const pct = linea ? tablasDe(tablas).mb?.[linea] || 0 : 0
   return facturacion.map((v) => v * pct)
 }
 
@@ -151,11 +154,11 @@ export const anioDe = (iso) => {
 }
 
 // --- Fila enriquecida con todas las columnas calculadas ---
-export function enrich(row, year = DEFAULT_BILLING_YEAR) {
-  const mcb = calcMCB(row)
+export function enrich(row, year = DEFAULT_BILLING_YEAR, tablas) {
+  const mcb = calcMCB(row, tablas)
   const facturacion = calcFacturacionMensual(row, year)
-  const mb = calcMBMensual(facturacion, mcb)
-  const probabilidad = probabilidadNum(row.probabilidadCierre)
+  const mb = calcMBMensual(facturacion, mcb, tablas)
+  const probabilidad = probabilidadNum(row.probabilidadCierre, tablas)
   const totalFacturacion = facturacion.reduce((a, b) => a + b, 0)
   const totalMB = mb.reduce((a, b) => a + b, 0)
   const contribucion = calcContribucionTrimestral(facturacion, row.margenMix)
@@ -186,16 +189,16 @@ export function enrich(row, year = DEFAULT_BILLING_YEAR) {
     trimestreCierre: trimestreDe(row.fechaCierre),
     anioCierre: anioDe(row.fechaCierre),
     probabilidad,
-    tipoVenta: clasificacionDe(row.kare),
+    tipoVenta: clasificacionDe(row.kare, tablas),
     venta: esTransaccional(row.tiempoContrato) ? 'Venta Transaccional' : 'Recurrente',
     empresaInterna: empresaInternaDe(row),
-    arquitecto: arquitectoDe(row.aliado),
+    arquitecto: arquitectoDe(row.aliado, tablas),
     // Pipeline Sensibilizado = Booking Total * Probabilidad
     sensibilizado: (row.bookingTotal || 0) * probabilidad,
   }
 }
 
-export function enrichAll(rows, year = DEFAULT_BILLING_YEAR) {
+export function enrichAll(rows, year = DEFAULT_BILLING_YEAR, tablas) {
   // Ojo: arrow function a propósito — `rows.map(enrich)` pasaría el índice como año.
-  return rows.map((row) => enrich(row, year))
+  return rows.map((row) => enrich(row, year, tablas))
 }

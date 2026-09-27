@@ -1,0 +1,63 @@
+{
+  "_comentario": "Valores por defecto de las tablas de cálculo. En producción se siembran en app_config y se editan desde Configuración → Tablas de cálculo; este archivo es solo el punto de partida.",
+  "mcb": {
+    "sumhw": 0.22,
+    "hwaas": 0.28,
+    "svcs": 0.35,
+    "swter": 0.27,
+    "swss": 0.27
+  },
+  "mb": {
+    "sumhw": 0.24,
+    "hwaas": 0.34,
+    "svcs": 0.35,
+    "swter": 0.3,
+    "swss": 0.27
+  },
+  "probabilidad": {
+    "0% Se lo ganó un competidor": 0,
+    "5% Lead calificado por comercial": 0.05,
+    "10% Oportunidad calificada (dolor, decisor y presupuesto)": 0.1,
+    "10% Proceso calificación (despejando dudas)": 0.1,
+    "20% Levantamiento detalles y alcance": 0.2,
+    "30% Diseño y estimaciones presupuesto": 0.3,
+    "40% Cliente confirma necesidad oferta": 0.4,
+    "50% Oferta presentada y sustentada": 0.5,
+    "60% Oferta retroalimentación positiva": 0.6,
+    "70% Oferta alta probabilidad cierre": 0.7,
+    "80% Cierre oferta comprometida": 0.8,
+    "90% Solo falta documento formal": 0.9,
+    "100% Booking legalizado en SAP": 1,
+    "1% Proyecto cancelado": 0.01
+  },
+  "kareClasificacion": {
+    "Acquire - Logos nuevos": "Nuevo",
+    "Expand - Expandir": "Nuevo",
+    "Keep -  Mantener (Recompra)": "Nuevo",
+    "Keep - Mantener (Renovaciones)": "Renovación",
+    "Recovery - Recuperación": "Nuevo",
+    "Keep - Mantener (Recompra)": "Nuevo"
+  },
+  "aliadoArquitecto": {
+    "Almasons,SmartSuite": "Natalia",
+    "Almasons,Urovo": "Bibiana",
+    "Blackview": "Camilo ",
+    "Brother": "Camilo ",
+    "Fabupel": "No aplica",
+    "Honeywell": "Camilo ",
+    "No Aplica": "No aplica",
+    "Scalefusion": "Mayra ",
+    "SmartSuite": "Natalia",
+    "TechnoApes": "Mayra ",
+    "UBS": "Bibiana",
+    "Unitech": "Camilo ",
+    "Urovo": "Camilo ",
+    "Zebra": "Camilo ",
+    "Otro": "No aplica",
+    "Almasons": "Bibiana",
+    "Etibarras": "No aplica",
+    "Bogopack": "No aplica",
+    "Applivery": "Mayra ",
+    "Ionline": "No aplica"
+  }
+}

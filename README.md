@@ -65,9 +65,16 @@ lista de pipelines que trae GoHighLevel:
    (el nombre con el que se verá el agente). Sin alias se usa el nombre de GHL.
    Un pipeline no puede ser comercial y de agente a la vez.
 
-Al guardar, la configuración queda en la base de datos (`app_config` para el
-comercial, `ia_pipelines` para los agentes) y el backend consulta GoHighLevel de
-inmediato. Cuando el equipo cree un pipeline nuevo aparece solo en esa lista: basta
+La segunda pestaña, **Tablas de cálculo**, edita lo que antes estaba fijo en el código:
+los **márgenes MCB y MB** por línea de producto, la **probabilidad de cierre** (texto de
+GHL → %), **KARE → tipo de venta** y **aliado → arquitecto**. Así, un aliado nuevo o un
+margen ajustado no requieren desplegar. Los porcentajes se escriben como `22`, se guardan
+como `0,22`, y los márgenes deben llegar completos: una línea sin porcentaje válido se
+rechaza con un mensaje, en vez de calcularse como 0 %.
+
+Al guardar, la configuración queda en la base de datos (`app_config` para el pipeline
+comercial y las tablas, `ia_pipelines` para los agentes) y el backend consulta
+GoHighLevel de inmediato. Cuando el equipo cree un pipeline nuevo aparece solo en esa lista: basta
 configurarlo, sin redeploy ni variables de entorno.
 
 Todos los agentes seleccionados se sirven juntos en `/api/pipeline-ia`; cada fila
@@ -113,10 +120,13 @@ que comparar. Sin `DATABASE_URL` (dev) no hay histórico y la pantalla lo dice.
   `opportunity.seguimiento` (8 etapas de follow-up). Ambos son filtrables y sirven como
   condición en *Mis Métricas*; para agrupar bien por Fuente hay que normalizarla en el CRM.
 - El motor de cálculo (`src/lib/calc.js`) replica las fórmulas del Excel: MCB, facturación
-  mensual, MB, probabilidad, pipeline sensibilizado, contribución por trimestre, etc.
+  mensual, MB, probabilidad, pipeline sensibilizado, contribución por trimestre, etc. Las
+  tablas que usa llegan por parámetro desde la configuración; `src/data/tablasCalculo.json`
+  son solo los valores por defecto (los que se siembran en el primer arranque y los que se
+  usan si el backend no responde).
 - **MB y Contribución no son lo mismo**, aunque ambos midan margen:
-  - **MB** = facturación del mes × un % fijo según la línea de producto dominante
-    (`MB_PCT` en `calc.js`: 24 % SUMHW, 34 % HWAAS, 35 % SVCS…).
+  - **MB** = facturación del mes × el % de la línea de producto dominante (editable en
+    *Configuración → Tablas de cálculo*; por defecto 24 % SUMHW, 34 % HWAAS, 35 % SVCS…).
   - **Contribución Qn** = facturación de los 3 meses del trimestre × el **Margen Mix**
     propio de esa oportunidad. Es la cifra con la que el Excel mide metas y cumplimiento
     en sus hojas *Resultados* y *Consultores*, y la que hay que usar para compararse
