@@ -29,7 +29,12 @@ export async function query(text, params) {
 // Reintenta ante fallos transitorios de red/DNS al arrancar.
 export async function initDb(retries = 5) {
   if (!AUTH_ENABLED) {
-    console.log('[infotrack] AUTH desactivado (no hay DATABASE_URL) — dashboard abierto en dev')
+    console.warn(
+      '[infotrack] ATENCIÓN: no hay DATABASE_URL, así que el login está DESACTIVADO y el '
+      + 'dashboard queda abierto a cualquiera con la URL. Sin base de datos tampoco hay '
+      + 'usuarios, métricas compartidas, vistas guardadas ni histórico del pipeline. '
+      + 'En producción, configurá DATABASE_URL.'
+    )
     return
   }
   for (let attempt = 1; ; attempt++) {

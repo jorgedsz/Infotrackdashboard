@@ -5,7 +5,7 @@
 // que comparar. Acá se archiva una foto por día (la última del día manda) y la
 // vista compara las dos fechas que se elijan.
 import { query, AUTH_ENABLED } from './db.js'
-import { requireAuth, requireAdmin } from './auth.js'
+import { requireAuth, requireAdmin, requireDb } from './auth.js'
 
 // Agrupa el booking y el conteo por una dimensión de las filas crudas.
 // Se usa `bookingTotal` porque es lo que compara el Excel y porque viene del
@@ -93,10 +93,10 @@ export function mountSnapshotsRoutes(app, { rowsActuales } = {}) {
   })
 
   // Fuerza la foto de hoy (útil para no esperar al primer refresh del día).
-  app.post('/api/snapshots', requireAuth, requireAdmin, async (_req, res) => {
+  app.post('/api/snapshots', requireDb, requireAuth, requireAdmin, async (_req, res) => {
     try {
       const datos = await guardarSnapshot(rowsActuales?.() || [])
-      if (!datos) return res.status(400).json({ error: 'Sin datos que archivar (o sin base de datos)' })
+      if (!datos) return res.status(400).json({ error: 'No hay oportunidades que archivar todavía.' })
       res.json({ ok: true, fecha: hoyISO(), datos })
     } catch (e) {
       res.status(500).json({ error: String(e.message || e) })

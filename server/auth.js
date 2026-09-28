@@ -43,6 +43,18 @@ export async function requireAuth(req, res, next) {
   }
 }
 
+// Las rutas que leen o escriben en la base de datos: sin DATABASE_URL, `query`
+// lanza y Express lo convierte en un 500 sin explicación. Mejor decir qué falta.
+export function requireDb(_req, res, next) {
+  if (!AUTH_ENABLED) {
+    return res.status(503).json({
+      error: 'Esta sección necesita una base de datos y el servidor está corriendo sin ella '
+        + '(falta DATABASE_URL).',
+    })
+  }
+  next()
+}
+
 export function requireAdmin(req, res, next) {
   if (!AUTH_ENABLED) return next()
   if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Requiere rol admin' })
@@ -72,12 +84,12 @@ export function mountAuthRoutes(app) {
   app.get('/api/auth/me', requireAuth, (req, res) => res.json({ user: req.user, authEnabled: AUTH_ENABLED }))
 
   // --- Gestión de usuarios (solo admin) ---
-  app.get('/api/users', requireAuth, requireAdmin, async (_req, res) => {
+  app.get('/api/users', requireDb, requireAuth, requireAdmin, async (_req, res) => {
     const { rows } = await query('SELECT id, email, name, role, comerciales, view_all, created_at FROM users ORDER BY created_at')
     res.json({ users: rows })
   })
 
-  app.post('/api/users', requireAuth, requireAdmin, async (req, res) => {
+  app.post('/api/users', requireDb, requireAuth, requireAdmin, async (req, res) => {
     const email = String(req.body?.email || '').trim().toLowerCase()
     const name = String(req.body?.name || '').trim()
     const password = String(req.body?.password || '')
@@ -102,7 +114,7 @@ export function mountAuthRoutes(app) {
   })
 
   // Editar usuario (rol, comerciales, alcance y, opcionalmente, contraseña)
-  app.patch('/api/users/:id', requireAuth, requireAdmin, async (req, res) => {
+  app.patch('/api/users/:id', requireDb, requireAuth, requireAdmin, async (req, res) => {
     const id = Number(req.params.id)
     const role = req.body?.role === 'admin' ? 'admin' : 'user'
     const { viewAll, comerciales } = parseScope(req.body)
@@ -121,7 +133,7 @@ export function mountAuthRoutes(app) {
     }
   })
 
-  app.delete('/api/users/:id', requireAuth, requireAdmin, async (req, res) => {
+  app.delete('/api/users/:id', requireDb, requireAuth, requireAdmin, async (req, res) => {
     const id = Number(req.params.id)
     if (id === req.user.id) return res.status(400).json({ error: 'No puedes eliminarte a ti mismo' })
     await query('DELETE FROM users WHERE id = $1', [id])

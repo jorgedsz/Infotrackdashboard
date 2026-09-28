@@ -167,6 +167,15 @@ export default function InfoTrackDashboard() {
         </div>
       </header>
 
+      {/* Sin DATABASE_URL el login está desactivado: en producción hay que verlo. */}
+      {authEnabled === false && (
+        <div className="cfg__aviso cfg__aviso--error">
+          Sin base de datos (<code>DATABASE_URL</code>): el dashboard está <strong>abierto sin
+          login</strong> y no se guardan usuarios, métricas compartidas, vistas ni histórico.
+          Si esto no es tu máquina, configurá la variable en el servidor.
+        </div>
+      )}
+
       {pipeline === 'ia' ? (
         <PipelineIA onIrAConfig={() => { setPipeline('comercial'); setTab('config') }} />
       ) : (
@@ -199,7 +208,8 @@ export default function InfoTrackDashboard() {
             <button className={'tab' + (tab === 'evolucion' ? ' tab--active' : '')} onClick={() => setTab('evolucion')}>
               Evolución
             </button>
-            {esAdmin && (
+            {/* Sin base de datos no hay usuarios que gestionar */}
+            {esAdmin && authEnabled !== false && (
               <button className={'tab' + (tab === 'usuarios' ? ' tab--active' : '')} onClick={() => setTab('usuarios')}>
                 Usuarios
               </button>

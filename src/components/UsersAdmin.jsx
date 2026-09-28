@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../services/http'
+import { useAuth } from '../context/AuthContext'
 import MultiSelect from './MultiSelect'
 
 const emptyForm = () => ({ name: '', email: '', password: '', role: 'user', view_all: true, comerciales: [] })
 
 export default function UsersAdmin() {
+  const { authEnabled } = useAuth()
   const [users, setUsers] = useState([])
   const [comerciales, setComerciales] = useState([])
   const [form, setForm] = useState(emptyForm)
@@ -19,7 +21,7 @@ export default function UsersAdmin() {
       setComerciales(c.comerciales || [])
     } catch (e) { setError(e.message) }
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => { if (authEnabled !== false) load() }, [authEnabled])
 
   const reset = () => { setForm(emptyForm()); setEditing(null); setError('') }
 
@@ -46,6 +48,16 @@ export default function UsersAdmin() {
   const remove = async (id) => {
     if (!confirm('¿Eliminar este usuario?')) return
     try { await apiFetch(`/api/users/${id}`, { method: 'DELETE' }); await load() } catch (e) { setError(e.message) }
+  }
+
+  // Los usuarios viven en la base de datos: sin ella no hay nada que gestionar.
+  if (authEnabled === false) {
+    return (
+      <div className="cfg__aviso cfg__aviso--error">
+        El servidor está corriendo <strong>sin base de datos</strong> (falta <code>DATABASE_URL</code>),
+        así que no hay usuarios que gestionar — y, mientras siga así, el dashboard no pide login.
+      </div>
+    )
   }
 
   return (

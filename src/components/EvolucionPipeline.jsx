@@ -91,10 +91,12 @@ export default function EvolucionPipeline() {
 
   if (estado.sinHistorico) {
     return (
-      <div className="cfg__aviso">
-        El histórico se guarda en la base de datos, y en este entorno no hay ninguna
-        configurada (dev sin <code>DATABASE_URL</code>). En producción se archiva una foto
-        del pipeline por día automáticamente.
+      <div className="cfg__aviso cfg__aviso--error">
+        El histórico se guarda en la base de datos y el servidor está corriendo{' '}
+        <strong>sin ninguna</strong> (falta <code>DATABASE_URL</code>), así que no se está
+        archivando nada. Con la base de datos conectada se guarda una foto del pipeline por
+        día, sola. Podés confirmarlo en <code>/api/health</code>: <code>authEnabled</code>{' '}
+        tiene que decir <code>true</code>.
       </div>
     )
   }
